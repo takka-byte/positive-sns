@@ -1488,8 +1488,7 @@ async function loadDmList() {
 // 個人DMを非表示にする
 async function hideDm(event, dmId) {
   event.stopPropagation();
-  showConfirm('DMを非表示', 'このDMを受信箱から非表示にしますか？
-（新規DMで相手のIDを入力すると復元できます）', async () => {
+  showConfirm('DMを非表示', 'このDMを受信箱から非表示にしますか？（新規DMで相手のIDを入力すると復元できます）', async () => {
     await db.collection('dms').doc(dmId).update({
       hiddenFor: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
     });
@@ -1568,7 +1567,7 @@ async function startDm() {
   openDm(ref.id);
 }
 
-function openDm(dmId) {
+async function openDm(dmId) {
   currentDmId = dmId;
   if (dmUnsubscribe) { dmUnsubscribe(); dmUnsubscribe = null; }
 
