@@ -243,24 +243,6 @@ img{max-width:100%}
 @media(max-width:900px){.right-panel{display:none}}
 @media(max-width:700px){.sidebar{display:none}.feed{max-width:100%;border:none}.main-layout{padding-top:60px}}
 
-/* ---------- お知らせ ---------- */
-.announce-card{padding:16px;border-bottom:1px solid var(--border);background:var(--bg2)}
-.announce-card:hover{background:var(--bg3)}
-.announce-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
-.announce-badge{background:var(--primary);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;flex-shrink:0;margin-top:2px}
-.announce-title{font-weight:700;font-size:15px;flex:1}
-.announce-body{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:8px}
-.announce-time{font-size:12px;color:var(--text2)}
-
-/* ---------- DM管理 ---------- */
-.dm-list-item{position:relative}
-.dm-hide-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;opacity:0;transition:opacity 0.2s;padding:4px}
-.dm-list-item:hover .dm-hide-btn{opacity:1}
-.dm-hide-btn:hover{color:var(--danger)}
-.member-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg3);border-radius:20px;padding:3px 10px;font-size:13px;margin:3px}
-.member-chip button{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;line-height:1;padding:0}
-.member-chip button:hover{color:var(--danger)}
-
 /* ---------- アニメーション ---------- */
 .fade-in{animation:fadeIn 0.3s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -383,9 +365,6 @@ img{max-width:100%}
       </button>
       <button class="nav-item" onclick="showView('admin')" id="nav-admin" style="display:none">
         <span class="icon">🛡️</span> 管理者
-      </button>
-      <button class="nav-item" onclick="showView('announce')" id="nav-announce">
-        <span class="icon">📢</span> お知らせ
       </button>
       <button class="nav-item" onclick="openModal('termsModal')">
         <span class="icon">📄</span> 利用規約
@@ -528,24 +507,6 @@ img{max-width:100%}
         </div>
       </div>
 
-      <!-- お知らせ -->
-      <div id="view-announce" style="display:none">
-        <div class="feed-header">📢 お知らせ</div>
-        <!-- 管理者のみ投稿フォームを表示 -->
-        <div id="announcePostBox" style="display:none;padding:16px;border-bottom:1px solid var(--border);background:var(--bg2)">
-          <div class="form-group">
-            <input class="form-input" id="announceTitleInput" type="text" placeholder="タイトル（例：メンテナンスのお知らせ）" maxlength="50">
-          </div>
-          <div class="form-group" style="margin-top:8px">
-            <textarea class="post-input" id="announceBodyInput" placeholder="お知らせの内容を入力..." rows="3" style="min-height:70px"></textarea>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="postAnnounce()">📢 投稿する</button>
-        </div>
-        <div id="announceList">
-          <div class="loading"><div class="spinner"></div>読み込み中...</div>
-        </div>
-      </div>
-
     </main>
 
     <!-- 右パネル（検索など） -->
@@ -566,7 +527,6 @@ img{max-width:100%}
       <button class="bottom-nav-btn active" onclick="showView('timeline')"><span class="icon">🏠</span>ホーム</button>
       <button class="bottom-nav-btn" onclick="showView('dm')"><span class="icon">💬</span>DM</button>
       <button class="bottom-nav-btn" onclick="showView('settings')"><span class="icon">⚙️</span>設定</button>
-      <button class="bottom-nav-btn" onclick="showView('announce')"><span class="icon">📢</span>お知らせ</button>
       <button class="bottom-nav-btn" onclick="showView('admin')" id="mobileAdminBtn" style="display:none"><span class="icon">🛡️</span>管理</button>
     </div>
   </nav>
@@ -587,23 +547,19 @@ img{max-width:100%}
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
       <label class="toggle">
-        <input type="checkbox" id="isGroupDm" onchange="document.getElementById('groupMembersArea').style.display=this.checked?'':'none'">
+        <input type="checkbox" id="isGroupDm">
         <span class="toggle-slider"></span>
       </label>
       <span style="font-size:14px">グループDM（複数人）</span>
     </div>
     <div id="groupMembersArea" style="display:none;margin-bottom:14px">
       <div class="form-group">
-        <label class="form-label">グループ名</label>
-        <input class="form-input" id="groupName" type="text" placeholder="グループ名">
+        <label class="form-label">追加メンバー（カンマ区切りで複数入力）</label>
+        <input class="form-input" id="groupMembers" type="text" placeholder="user1, user2, user3">
       </div>
       <div class="form-group">
-        <label class="form-label">メンバーを追加</label>
-        <div style="display:flex;gap:6px">
-          <input class="form-input" id="groupMemberInput" type="text" placeholder="ユーザーIDを入力" style="flex:1">
-          <button class="btn btn-secondary btn-sm" onclick="addGroupMember()" type="button">追加</button>
-        </div>
-        <div id="groupMemberChips" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px"></div>
+        <label class="form-label">グループ名</label>
+        <input class="form-input" id="groupName" type="text" placeholder="グループ名">
       </div>
     </div>
     <button class="btn btn-primary btn-full" onclick="startDm()">DMを開始</button>
@@ -618,28 +574,6 @@ img{max-width:100%}
       <button class="modal-close" onclick="closeModal('badgeModal')">✕</button>
     </div>
     <div id="badgeModalContent"></div>
-  </div>
-</div>
-
-<!-- グループDM管理モーダル -->
-<div class="modal-overlay" id="groupDmManageModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">👥 グループDM管理</div>
-      <button class="modal-close" onclick="closeModal('groupDmManageModal')">✕</button>
-    </div>
-    <div id="groupDmManageContent"></div>
-  </div>
-</div>
-
-<!-- お知らせ編集モーダル（管理者） -->
-<div class="modal-overlay" id="announceModal">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-header">
-      <div class="modal-title">📢 お知らせ投稿</div>
-      <button class="modal-close" onclick="closeModal('announceModal')">✕</button>
-    </div>
-    <div id="announceModalContent"></div>
   </div>
 </div>
 
@@ -851,7 +785,7 @@ function toggleThemeFromSettings() {
 // ビュー切替
 // ============================================================
 function showView(name) {
-  ['timeline','dm','settings','admin','announce'].forEach(v => {
+  ['timeline','dm','settings','admin'].forEach(v => {
     const el = document.getElementById('view-'+v);
     if (el) el.style.display = v === name ? 'block' : 'none';
     const nav = document.getElementById('nav-'+v);
@@ -860,7 +794,6 @@ function showView(name) {
   if (name === 'timeline') loadTimeline();
   if (name === 'dm') loadDmList();
   if (name === 'admin') loadAdmin();
-  if (name === 'announce') loadAnnounce();
   if (name === 'settings') {
     const inp = document.getElementById('settingsDisplayName');
     if (inp && currentProfile) inp.value = currentProfile.displayName || '';
@@ -1437,12 +1370,10 @@ async function loadDmList() {
     return tb - ta;
   });
 
-  // 相手ユーザーが削除済みでないか・非表示でないか確認してからリスト表示
+  // 相手ユーザーが削除済みでないか確認してからリスト表示
   const validItems = [];
   for (const doc of sortedDocs) {
     const d = doc.data();
-    // 個人DM：非表示にしていたらスキップ
-    if (!d.isGroup && (d.hiddenFor || []).includes(currentUser.uid)) continue;
     if (d.isGroup) {
       // グループDMは参加者全員のうち1人でも存在すればOK（自分以外）
       const otherUids = (d.participants || []).filter(uid => uid !== currentUser.uid);
@@ -1471,33 +1402,21 @@ async function loadDmList() {
     const name = d.isGroup ? (d.groupName || 'グループDM') :
       (d.participantNames || []).filter(n => n !== currentProfile.displayName)[0] || 'DM';
     const preview = d.lastMessage || '';
-    const hideBtn = !d.isGroup
-      ? `<button class="dm-hide-btn" onclick="hideDm(event,'${doc.id}')" title="非表示にする">✕</button>`
-      : '';
     return `<div class="dm-list-item" onclick="openDm('${doc.id}')">
       <div class="avatar avatar-sm" style="background:var(--primary)">${getInitial(name)}</div>
-      <div style="flex:1;min-width:0">
+      <div>
         <div class="dm-name">${escapeHtml(name)}</div>
         <div class="dm-preview">${escapeHtml(preview)}</div>
       </div>
-      ${hideBtn}
     </div>`;
   }).join('');
 }
 
-// 個人DMを非表示にする
-async function hideDm(event, dmId) {
-  event.stopPropagation();
-  showConfirm('DMを非表示', 'このDMを受信箱から非表示にしますか？（新規DMで相手のIDを入力すると復元できます）', async () => {
-    await db.collection('dms').doc(dmId).update({
-      hiddenFor: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-    });
-    toast('✅ 非表示にしました');
-    loadDmList();
-  });
-}
-
 function openNewDM() { openModal('newDmModal'); }
+
+document.getElementById('isGroupDm').addEventListener('change', function() {
+  document.getElementById('groupMembersArea').style.display = this.checked ? '' : 'none';
+});
 
 async function startDm() {
   const targetId = document.getElementById('dmTargetUserId').value.trim();
@@ -1514,7 +1433,17 @@ async function startDm() {
   let participantNames = [currentProfile.displayName, targetUser.data().displayName];
   let groupName = '';
 
-  // グループメンバーはchips方式で取得（startDm後半のコードで処理）
+  if (isGroup) {
+    const extras = document.getElementById('groupMembers').value.split(',').map(s => s.trim()).filter(Boolean);
+    groupName = document.getElementById('groupName').value.trim() || 'グループDM';
+    for (const uid of extras) {
+      const es = await db.collection('users').where('userId','==', uid).get();
+      if (!es.empty) {
+        participants.push(es.docs[0].id);
+        participantNames.push(es.docs[0].data().displayName);
+      }
+    }
+  }
 
   // 既存DM検索（1対1）
   if (!isGroup) {
@@ -1524,39 +1453,15 @@ async function startDm() {
       .get();
     const found = existing.docs.find(d => d.data().participants.includes(targetUser.id));
     if (found) {
-      // 非表示になっていたら復元（hiddenForから自分のUIDを削除）
-      const hiddenFor = found.data().hiddenFor || [];
-      if (hiddenFor.includes(currentUser.uid)) {
-        await db.collection('dms').doc(found.id).update({
-          hiddenFor: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
-        });
-        toast('✅ DMを復元しました');
-      }
       closeModal('newDmModal');
-      await loadDmList();
       openDm(found.id);
       return;
     }
   }
 
-  // グループメンバーをchipsから取得
-  if (isGroup) {
-    const chips = document.querySelectorAll('#groupMemberChips .member-chip');
-    chips.forEach(chip => {
-      const uid = chip.dataset.uid;
-      const name = chip.dataset.name;
-      if (uid && !participants.includes(uid)) {
-        participants.push(uid);
-        participantNames.push(name);
-      }
-    });
-    groupName = document.getElementById('groupName').value.trim() || 'グループDM';
-  }
-
   const ref = await db.collection('dms').add({
     participants, participantNames,
     isGroup, groupName,
-    hiddenFor: [],
     lastMessage: '',
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1567,25 +1472,15 @@ async function startDm() {
   openDm(ref.id);
 }
 
-async function openDm(dmId) {
+function openDm(dmId) {
   currentDmId = dmId;
   if (dmUnsubscribe) { dmUnsubscribe(); dmUnsubscribe = null; }
 
   document.querySelectorAll('.dm-list-item').forEach(el => el.classList.remove('active'));
 
   const area = document.getElementById('dmChatArea');
-
-  // グループDMかどうか確認してヘッダーボタンを変える
-  const dmSnap = await db.collection('dms').doc(dmId).get();
-  const dmData = dmSnap.exists ? dmSnap.data() : {};
-  const isGroupDmChat = dmData.isGroup === true;
-  const groupManageBtn = isGroupDmChat
-    ? `<button class="btn btn-secondary btn-sm" onclick="openGroupManage('${dmId}')" style="margin-left:auto">⚙️ グループ管理</button>`
-    : '';
-
   area.innerHTML = `
     <div class="dm-chat">
-      ${isGroupDmChat ? `<div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;font-size:14px;font-weight:700;background:var(--bg2)">${escapeHtml(dmData.groupName||'グループDM')} ${groupManageBtn}</div>` : ''}
       <div class="dm-messages" id="dmMessages"></div>
       <div class="dm-input-area">
         <input class="dm-input" id="dmInput" placeholder="メッセージを入力..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendDmMessage();event.preventDefault()}">
@@ -1903,233 +1798,6 @@ async function toggleMaintenance() {
     document.getElementById('maintenanceStatus').textContent = 'オフ';
     toast('✅ メンテナンスモードを解除しました');
   }
-}
-
-// ============================================================
-// お知らせ機能
-// ============================================================
-async function loadAnnounce() {
-  const list = document.getElementById('announceList');
-  if (!list) return;
-
-  // 管理者なら投稿フォームを表示
-  const box = document.getElementById('announcePostBox');
-  if (box) box.style.display = currentProfile?.isAdmin ? '' : 'none';
-
-  list.innerHTML = '<div class="loading"><div class="spinner"></div>読み込み中...</div>';
-
-  try {
-    const snap = await db.collection('announcements')
-      .orderBy('createdAt','desc').limit(50).get();
-
-    if (snap.empty) {
-      list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2)">お知らせはまだありません</div>';
-      return;
-    }
-
-    list.innerHTML = snap.docs.map(doc => {
-      const d = doc.data();
-      const isAdmin = currentProfile?.isAdmin;
-      return `<div class="announce-card fade-in">
-        <div class="announce-header">
-          <span class="announce-badge">📢 お知らせ</span>
-          <div class="announce-title">${escapeHtml(d.title||'')}</div>
-          ${isAdmin ? `<button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteAnnounce('${doc.id}')">🗑️</button>` : ''}
-        </div>
-        <div class="announce-body">${escapeHtml(d.body||'').replace(/
-/g,'<br>')}</div>
-        <div class="announce-time">${formatDate(d.createdAt)} · ${escapeHtml(d.authorName||'管理者')}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    list.innerHTML = `<div style="padding:20px;color:var(--danger)">読み込みエラー: ${e.message}</div>`;
-  }
-}
-
-async function postAnnounce() {
-  const title = document.getElementById('announceTitleInput').value.trim();
-  const body  = document.getElementById('announceBodyInput').value.trim();
-  if (!title) { toast('タイトルを入力してください'); return; }
-  if (!body)  { toast('内容を入力してください'); return; }
-  if (!currentProfile?.isAdmin) { toast('管理者のみ投稿できます'); return; }
-
-  try {
-    await db.collection('announcements').add({
-      title,
-      body,
-      authorName: currentProfile.displayName,
-      authorUid:  currentUser.uid,
-      createdAt:  firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('announceTitleInput').value = '';
-    document.getElementById('announceBodyInput').value  = '';
-    toast('✅ お知らせを投稿しました');
-    loadAnnounce();
-  } catch(e) {
-    toast('投稿に失敗しました: ' + e.message, 4000);
-  }
-}
-
-async function deleteAnnounce(docId) {
-  showConfirm('お知らせ削除', 'このお知らせを削除しますか？', async () => {
-    await db.collection('announcements').doc(docId).delete();
-    toast('✅ 削除しました');
-    loadAnnounce();
-  });
-}
-
-// ============================================================
-// グループDM管理
-// ============================================================
-async function openGroupManage(dmId) {
-  const snap = await db.collection('dms').doc(dmId).get();
-  if (!snap.exists) { toast('DMが見つかりません'); return; }
-  const d = snap.data();
-
-  // 参加メンバーの表示名を取得
-  const memberInfos = [];
-  for (const uid of (d.participants || [])) {
-    const u = await db.collection('users').doc(uid).get();
-    if (u.exists) memberInfos.push({ uid, displayName: u.data().displayName, userId: u.data().userId });
-  }
-
-  const content = document.getElementById('groupDmManageContent');
-  content.innerHTML = `
-    <div class="form-group">
-      <label class="form-label">グループ名</label>
-      <div style="display:flex;gap:6px">
-        <input class="form-input" id="editGroupName" value="${escapeHtml(d.groupName||'')}" style="flex:1">
-        <button class="btn btn-primary btn-sm" onclick="updateGroupName('${dmId}')">変更</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">メンバー（${memberInfos.length}人）</label>
-      <div id="groupMemberList">
-        ${memberInfos.map(m => `
-          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-            <div class="avatar avatar-sm" style="background:${avatarColor(m.uid)}">${getInitial(m.displayName)}</div>
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:14px">${escapeHtml(m.displayName)}</div>
-              <div style="font-size:12px;color:var(--text2)">@${escapeHtml(m.userId)}</div>
-            </div>
-            ${m.uid !== currentUser.uid ? `<button class="btn btn-danger btn-sm" onclick="removeGroupMember('${dmId}','${m.uid}','${escapeHtml(m.displayName)}')">削除</button>` : '<span style="font-size:12px;color:var(--text2)">あなた</span>'}
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="form-group" style="margin-top:12px">
-      <label class="form-label">メンバーを追加</label>
-      <div style="display:flex;gap:6px">
-        <input class="form-input" id="addMemberInput" placeholder="ユーザーIDを入力" style="flex:1">
-        <button class="btn btn-success btn-sm" onclick="addMemberToGroup('${dmId}')">追加</button>
-      </div>
-    </div>
-    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-      <button class="btn btn-danger btn-sm" onclick="leaveGroup('${dmId}')">グループから退出</button>
-    </div>`;
-
-  openModal('groupDmManageModal');
-}
-
-async function updateGroupName(dmId) {
-  const name = document.getElementById('editGroupName').value.trim();
-  if (!name) { toast('グループ名を入力してください'); return; }
-  await db.collection('dms').doc(dmId).update({ groupName: name });
-  toast('✅ グループ名を変更しました');
-  closeModal('groupDmManageModal');
-  loadDmList();
-  openDm(dmId);
-}
-
-async function addMemberToGroup(dmId) {
-  const userId = document.getElementById('addMemberInput').value.trim();
-  if (!userId) { toast('ユーザーIDを入力してください'); return; }
-
-  const snap = await db.collection('users').where('userId','==',userId).get();
-  if (snap.empty) { toast('ユーザーが見つかりません'); return; }
-
-  const newUser = snap.docs[0];
-  const dmSnap = await db.collection('dms').doc(dmId).get();
-  const participants = dmSnap.data().participants || [];
-
-  if (participants.includes(newUser.id)) { toast('すでにメンバーです'); return; }
-
-  await db.collection('dms').doc(dmId).update({
-    participants: firebase.firestore.FieldValue.arrayUnion(newUser.id),
-    participantNames: firebase.firestore.FieldValue.arrayUnion(newUser.data().displayName)
-  });
-  toast('✅ メンバーを追加しました');
-  openGroupManage(dmId);
-}
-
-async function removeGroupMember(dmId, uid, displayName) {
-  showConfirm('メンバー削除', `${displayName} をグループから削除しますか？`, async () => {
-    const dmSnap = await db.collection('dms').doc(dmId).get();
-    const d = dmSnap.data();
-    const newParticipants = (d.participants||[]).filter(u => u !== uid);
-    const newNames = (d.participantNames||[]).filter(n => n !== displayName);
-    await db.collection('dms').doc(dmId).update({
-      participants: newParticipants,
-      participantNames: newNames
-    });
-    toast('✅ メンバーを削除しました');
-    openGroupManage(dmId);
-  });
-}
-
-async function leaveGroup(dmId) {
-  showConfirm('グループから退出', 'このグループから退出しますか？', async () => {
-    const dmSnap = await db.collection('dms').doc(dmId).get();
-    const d = dmSnap.data();
-    const newParticipants = (d.participants||[]).filter(u => u !== currentUser.uid);
-    const newNames = (d.participantNames||[]).filter(n => n !== currentProfile.displayName);
-    await db.collection('dms').doc(dmId).update({
-      participants: newParticipants,
-      participantNames: newNames
-    });
-    closeModal('groupDmManageModal');
-    currentDmId = null;
-    document.getElementById('dmChatArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2);font-size:14px">💬 チャットを選択してください</div>';
-    toast('✅ グループから退出しました');
-    loadDmList();
-  });
-}
-
-// ============================================================
-// グループメンバー追加（chips方式）
-// ============================================================
-const _groupMemberList = []; // 追加済みメンバーを一時保存
-
-async function addGroupMember() {
-  const input = document.getElementById('groupMemberInput');
-  const userId = input?.value.trim();
-  if (!userId) { toast('ユーザーIDを入力してください'); return; }
-  if (userId === currentProfile.userId) { toast('自分自身は追加できません'); return; }
-
-  // 重複チェック
-  if (_groupMemberList.find(m => m.userId === userId)) { toast('すでに追加されています'); return; }
-
-  const snap = await db.collection('users').where('userId','==',userId).get();
-  if (snap.empty) { toast('ユーザーが見つかりません'); return; }
-
-  const user = snap.docs[0];
-  const info = { uid: user.id, userId, displayName: user.data().displayName };
-  _groupMemberList.push(info);
-
-  const chip = document.createElement('div');
-  chip.className = 'member-chip';
-  chip.dataset.uid  = info.uid;
-  chip.dataset.name = info.displayName;
-  chip.innerHTML = `${escapeHtml(info.displayName)} <button onclick="removeGroupMemberChip('${userId}',this.parentElement)" type="button">✕</button>`;
-  document.getElementById('groupMemberChips').appendChild(chip);
-
-  input.value = '';
-  toast(`✅ ${info.displayName} を追加しました`);
-}
-
-function removeGroupMemberChip(userId, chipEl) {
-  const idx = _groupMemberList.findIndex(m => m.userId === userId);
-  if (idx !== -1) _groupMemberList.splice(idx, 1);
-  chipEl.remove();
 }
 
 // ============================================================
