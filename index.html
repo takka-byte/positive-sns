@@ -1022,7 +1022,7 @@ function _isQuotaError(status, bodyLower) {
 
 async function callGeminiAPI(text, intensity) {
   const key = APP_CONFIG?.GEMINI_API_KEY;
-  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ Gemini APIキーが設定されていません。');
+  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ AIが設定されていません。');
 
   const intensityGuide = {
     0: 'テキストの語尾や表現を少しポジティブに言い換える程度（マイルド）。元の意味をほぼ保ちつつ、柔らかい表現にする。',
@@ -1229,7 +1229,7 @@ function renderPostCard(doc, userCache) {
 
 function renderBadgeIcon(badge) {
   if (!badge||!badge.type) return '';
-  const icons  = { blue:'✅', gold:'🌟', gray:'⚙️' };
+  const icons  = { blue:'&#x2713', gold:'★', gray:'🔨' };
   const labels = { blue:'認証済みユーザー', gold:'特別ユーザー', gray:'管理者' };
   const icon   = icons[badge.type] || '🏅';
   const label  = badge.note || labels[badge.type] || '';
