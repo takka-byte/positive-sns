@@ -877,11 +877,11 @@ async function doRegister() {
   } catch(e) { showLoginError(translateFirebaseError(e.code)); }
 }
 
-// パスワードリセット（改善版）
+// パスワードリセット
 async function doPasswordReset() {
   clearLoginMessages();
   const email = document.getElementById('loginEmail').value.trim();
-  if (!email) { showLoginError('上のメールアドレス欄にアカウントのメールアドレスを入力してください'); return; }
+  if (!email) { showLoginError('メールアドレス欄にアカウントのメールアドレスを入力してください'); return; }
 
   // Firebase Authのactionコード設定（リセット後にログインページへ戻る）
   const actionCodeSettings = {
@@ -891,7 +891,7 @@ async function doPasswordReset() {
 
   try {
     await auth.sendPasswordResetEmail(email, actionCodeSettings);
-    showLoginSuccess('✅ パスワードリセットメールを送信しました！\n\nメールが届いたら、メール内の「パスワードをリセット」リンクをクリックして新しいパスワードを設定してください。\n\n※メールが届かない場合は迷惑メールフォルダをご確認ください。');
+    showLoginSuccess('✅ パスワードリセットメールを送信しました！\n\n※メールが届かない場合は迷惑メールフォルダをご確認ください。');
   } catch(e) {
     if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-email') {
       // セキュリティ上、アドレスが登録済みかどうかを明かさない
@@ -1064,10 +1064,10 @@ async function callGeminiAPI(text, intensity) {
           throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
         }
         if (lower.includes('expired') || lower.includes('renew')) {
-          throw new Error('🔑 APIキーの有効期限が切れています。');
+          throw new Error('🔑 AIの有効期限が切れています。');
         }
         if (resp.status === 403) {
-          throw new Error('🔑 APIキーが無効か権限がありません。');
+          throw new Error('🔑 AIが無効か権限がありません。');
         }
         throw new Error(`APIエラー (${resp.status}): ${errMsg}`);
       }
