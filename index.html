@@ -1229,7 +1229,7 @@ function renderPostCard(doc, userCache) {
 
 function renderBadgeIcon(badge) {
   if (!badge||!badge.type) return '';
-  const icons  = { blue:'&#x2713', gold:'★', gray:'🔨' };
+  const icons  = { blue:'&#x2713', gold:'&#10022', gray:'&#9729' };
   const labels = { blue:'認証済みユーザー', gold:'特別ユーザー', gray:'管理者' };
   const icon   = icons[badge.type] || '🏅';
   const label  = badge.note || labels[badge.type] || '';
