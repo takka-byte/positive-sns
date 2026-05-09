@@ -143,9 +143,11 @@ img{max-width:100%}
 .intensity-chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text2)}
 
 /* ---------- バッジ ---------- */
-.badge-wrap{position:relative;display:inline-flex;align-items:center}
-.badge-icon{font-size:14px;cursor:help}
-.badge-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg2);font-size:12px;padding:6px 10px;border-radius:var(--radius-sm);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:200;min-width:120px;text-align:center}
+.badge-wrap{position:relative;display:inline-flex;align-items:center;vertical-align:middle}
+.badge-svg{width:18px;height:18px;cursor:help;display:inline-block;flex-shrink:0;transition:transform 0.15s;vertical-align:middle}
+.badge-svg:hover{transform:scale(1.15)}
+.badge-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg2);font-size:12px;padding:6px 10px;border-radius:var(--radius-sm);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:200;min-width:130px;text-align:center;line-height:1.5}
+.badge-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--text)}
 .badge-wrap:hover .badge-tooltip{opacity:1}
 
 /* ---------- フィード上部 ---------- */
@@ -282,7 +284,8 @@ img{max-width:100%}
     <div>
       <div style="font-size:60px;margin-bottom:16px">🔧</div>
       <h1>メンテナンス中</h1>
-      <p>現在システムのメンテナンスを行っています。<br>しばらくした後にもう一度アクセスしてください。</p>
+      <p>現在システムのメンテナンスを行っています。<br>しばらく後にもう一度アクセスしてください。</p>
+      <p style="margin-top:16px;font-size:13px;color:var(--text2)">運営: たっか</p>
     </div>
   </div>
 </div>
@@ -314,6 +317,7 @@ img{max-width:100%}
 
         <!-- パスワードリセット -->
         <div class="reset-section">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:10px;text-align:center">パスワードをお忘れの場合は、上のメールアドレス欄に登録したアドレスを入力して↓のボタンを押してください。</p>
           <button class="btn btn-secondary btn-full btn-sm" onclick="doPasswordReset()">🔑 パスワードリセットメールを送る</button>
           <p style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;line-height:1.6">※メールが届いたら、メール内のリンクをクリックして新しいパスワードを設定してください。</p>
         </div>
@@ -379,7 +383,7 @@ img{max-width:100%}
         <span class="icon">⚙️</span> 設定
       </button>
       <button class="nav-item" onclick="showView('admin')" id="nav-admin" style="display:none">
-        <span class="icon">🛡️</span> 管理
+        <span class="icon">🛡️</span> 管理者
       </button>
       <button class="nav-item" onclick="openModal('termsModal')">
         <span class="icon">📄</span> 利用規約
@@ -400,7 +404,7 @@ img{max-width:100%}
       <div id="view-timeline">
         <div class="feed-header">🏠 ホーム</div>
         <div class="post-box">
-          <textarea class="post-input" id="postInput" placeholder="ネガティブでもOK！AIがポジティブに変換します。" rows="3"></textarea>
+          <textarea class="post-input" id="postInput" placeholder="いまどんな気持ち？ネガティブでもOK！AIがポジティブに変換します✨" rows="3"></textarea>
           <div class="post-tools">
             <div class="slider-wrap">
               <span>変換強度</span>
@@ -489,7 +493,7 @@ img{max-width:100%}
 
       <!-- 管理者パネル -->
       <div id="view-admin" style="display:none">
-        <div class="feed-header">🛡️ 管理パネル</div>
+        <div class="feed-header">🛡️ 管理者パネル</div>
         <div class="tab-bar">
           <button class="tab-btn active" onclick="switchAdminTab('users')">👥 ユーザー</button>
           <button class="tab-btn" onclick="switchAdminTab('posts')">📝 全投稿</button>
@@ -527,7 +531,7 @@ img{max-width:100%}
         <div style="font-weight:700;margin-bottom:10px;font-size:15px">📢 ポジティブSNSについて</div>
         <p style="font-size:13px;color:var(--text2);line-height:1.7">
           ネガティブな気持ちをAIがポジティブに変換してくれるSNSです。<br><br>
-          「尊い」で応援しよう！50尊いで🏆ゴールドバッジ獲得！
+          「尊い（TOUTOI）」で応援しよう！50尊いで🏆ゴールドバッジ獲得！
         </p>
       </div>
     </aside>
@@ -582,8 +586,8 @@ img{max-width:100%}
       <div class="modal-title">💬 新規メッセージ</div>
       <button class="modal-close" onclick="closeModal('newDmModal')">✕</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">ユーザーIDを入力</label>
+    <div class="form-group" id="dmTargetUserIdGroup">
+      <label class="form-label" id="dmTargetUserIdLabel">ユーザーIDを入力</label>
       <input class="form-input" id="dmTargetUserId" type="text" placeholder="相手のユーザーID">
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -877,11 +881,11 @@ async function doRegister() {
   } catch(e) { showLoginError(translateFirebaseError(e.code)); }
 }
 
-// パスワードリセット
+// パスワードリセット（改善版）
 async function doPasswordReset() {
   clearLoginMessages();
   const email = document.getElementById('loginEmail').value.trim();
-  if (!email) { showLoginError('メールアドレス欄にアカウントのメールアドレスを入力してください'); return; }
+  if (!email) { showLoginError('上のメールアドレス欄にアカウントのメールアドレスを入力してください'); return; }
 
   // Firebase Authのactionコード設定（リセット後にログインページへ戻る）
   const actionCodeSettings = {
@@ -891,7 +895,7 @@ async function doPasswordReset() {
 
   try {
     await auth.sendPasswordResetEmail(email, actionCodeSettings);
-    showLoginSuccess('✅ パスワードリセットメールを送信しました！\n\n※メールが届かない場合は迷惑メールフォルダをご確認ください。');
+    showLoginSuccess('✅ パスワードリセットメールを送信しました！\n\nメールが届いたら、メール内の「パスワードをリセット」リンクをクリックして新しいパスワードを設定してください。\n\n※メールが届かない場合は迷惑メールフォルダをご確認ください。');
   } catch(e) {
     if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-email') {
       // セキュリティ上、アドレスが登録済みかどうかを明かさない
@@ -1022,7 +1026,7 @@ function _isQuotaError(status, bodyLower) {
 
 async function callGeminiAPI(text, intensity) {
   const key = APP_CONFIG?.GEMINI_API_KEY;
-  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ AIが設定されていません。');
+  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ Gemini APIキーが設定されていません。');
 
   const intensityGuide = {
     0: 'テキストの語尾や表現を少しポジティブに言い換える程度（マイルド）。元の意味をほぼ保ちつつ、柔らかい表現にする。',
@@ -1064,10 +1068,10 @@ async function callGeminiAPI(text, intensity) {
           throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
         }
         if (lower.includes('expired') || lower.includes('renew')) {
-          throw new Error('🔑 AIの有効期限が切れています。');
+          throw new Error('🔑 APIキーの有効期限が切れています。');
         }
         if (resp.status === 403) {
-          throw new Error('🔑 AIが無効か権限がありません。');
+          throw new Error('🔑 APIキーが無効か権限がありません。');
         }
         throw new Error(`APIエラー (${resp.status}): ${errMsg}`);
       }
@@ -1228,13 +1232,35 @@ function renderPostCard(doc, userCache) {
 }
 
 function renderBadgeIcon(badge) {
-  if (!badge||!badge.type) return '';
-  const icons  = { blue:'&#x2713', gold:'&#10022', gray:'&#9729' };
-  const labels = { blue:'認証済みユーザー', gold:'特別ユーザー', gray:'管理者' };
-  const icon   = icons[badge.type] || '🏅';
+  if (!badge || !badge.type) return '';
+
+  const labels = { blue: '認証済みユーザー', gold: '特別ユーザー', gray: '管理者' };
   const label  = badge.note || labels[badge.type] || '';
   const date   = badge.grantedAt ? (badge.grantedAt.toDate ? badge.grantedAt.toDate().toLocaleDateString('ja-JP') : '') : '';
-  return `<div class="badge-wrap"><span class="badge-icon">${icon}</span><div class="badge-tooltip">${escapeHtml(label)}${date?'<br>'+date:''}</div></div>`;
+
+  // 青バッジ：X(Twitter)風チェックマーク
+  const svgBlue = `<svg class="badge-svg" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" aria-label="${escapeHtml(label)}">
+    <circle cx="11" cy="11" r="11" fill="#1d9bf0"/>
+    <path d="M5.5 11.5 L9.2 15.2 L16.5 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>`;
+
+  // 金バッジ：金色の星（特別ユーザー）
+  const svgGold = `<svg class="badge-svg" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" aria-label="${escapeHtml(label)}">
+    <circle cx="11" cy="11" r="11" fill="#f5a623"/>
+    <path d="M11 4.5 L12.6 8.9 L17.3 9.0 L13.7 11.8 L15.0 16.2 L11 13.6 L7.0 16.2 L8.3 11.8 L4.7 9.0 L9.4 8.9 Z" fill="#fff" stroke="#fff" stroke-width="0.3" stroke-linejoin="round"/>
+  </svg>`;
+
+  // 灰バッジ：シールド（管理者）
+  const svgGray = `<svg class="badge-svg" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg" aria-label="${escapeHtml(label)}">
+    <circle cx="11" cy="11" r="11" fill="#657786"/>
+    <path d="M11 4.5 L16.5 7.0 L16.5 11.5 C16.5 14.5 13.8 16.8 11 17.5 C8.2 16.8 5.5 14.5 5.5 11.5 L5.5 7.0 Z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M8.5 11.2 L10.2 12.9 L13.5 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>`;
+
+  const svgMap = { blue: svgBlue, gold: svgGold, gray: svgGray };
+  const svg = svgMap[badge.type] || svgBlue;
+
+  return `<span class="badge-wrap">${svg}<span class="badge-tooltip">${escapeHtml(label)}${date ? '<br>' + date : ''}</span></span>`;
 }
 
 // ============================================================
@@ -1424,7 +1450,14 @@ function openNewDM() {
   // グループメンバーリストをリセット
   groupMemberList = [];
   renderGroupMemberTags();
-  document.getElementById('dmTargetUserId').value = '';
+  const targetInput = document.getElementById('dmTargetUserId');
+  const targetLabel = document.getElementById('dmTargetUserIdLabel');
+  targetInput.value       = '';
+  targetInput.disabled    = false;
+  targetInput.style.opacity = '1';
+  targetInput.style.cursor  = '';
+  targetLabel.textContent = 'ユーザーIDを入力';
+  targetLabel.style.color = '';
   document.getElementById('groupName').value       = '';
   document.getElementById('groupMemberInput').value= '';
   document.getElementById('isGroupDm').checked     = false;
@@ -1433,7 +1466,22 @@ function openNewDM() {
 }
 
 document.getElementById('isGroupDm').addEventListener('change', function() {
-  document.getElementById('groupMembersArea').style.display = this.checked ? '' : 'none';
+  const isGroup     = this.checked;
+  const targetInput = document.getElementById('dmTargetUserId');
+  const targetLabel = document.getElementById('dmTargetUserIdLabel');
+  // グループDMのときはユーザーID入力をグレーアウト・無効化
+  targetInput.disabled    = isGroup;
+  targetInput.style.opacity = isGroup ? '0.4' : '1';
+  targetInput.style.cursor  = isGroup ? 'not-allowed' : '';
+  if (isGroup) {
+    targetInput.value = '';
+    targetLabel.textContent = 'ユーザーIDを入力（グループDMでは不要）';
+    targetLabel.style.color = 'var(--text2)';
+  } else {
+    targetLabel.textContent = 'ユーザーIDを入力';
+    targetLabel.style.color = '';
+  }
+  document.getElementById('groupMembersArea').style.display = isGroup ? '' : 'none';
 });
 
 // グループメンバー追加（タグ形式）
@@ -1469,19 +1517,21 @@ function renderGroupMemberTags() {
 
 async function startDm() {
   const targetId = document.getElementById('dmTargetUserId').value.trim();
-  if (!targetId) { toast('ユーザーIDを入力してください'); return; }
-  if (targetId === currentProfile.userId) { toast('自分自身にDMは送れません'); return; }
-  const isGroup = document.getElementById('isGroupDm').checked;
+  const isGroup  = document.getElementById('isGroupDm').checked;
 
-  const snap = await db.collection('users').where('userId','==', targetId).get();
-  if (snap.empty) { toast('ユーザーが見つかりません'); return; }
-  const targetUser = snap.docs[0];
+  // 1対1のときだけユーザーIDが必須
+  if (!isGroup) {
+    if (!targetId) { toast('ユーザーIDを入力してください'); return; }
+    if (targetId === currentProfile.userId) { toast('自分自身にDMは送れません'); return; }
+  }
 
-  let participants    = [currentUser.uid, targetUser.id];
-  let participantNames= [currentProfile.displayName, targetUser.data().displayName];
+  let participants     = [currentUser.uid];
+  let participantNames = [currentProfile.displayName];
   let groupName = '';
 
   if (isGroup) {
+    // グループDM：グループメンバーリストから参加者を構築（ユーザーID入力は使わない）
+    if (groupMemberList.length === 0) { toast('メンバーを1人以上追加してください'); return; }
     groupName = document.getElementById('groupName').value.trim() || 'グループDM';
     for (const m of groupMemberList) {
       if (!participants.includes(m.uid)) {
@@ -1489,17 +1539,21 @@ async function startDm() {
         participantNames.push(m.displayName);
       }
     }
-  }
+  } else {
+    // 1対1DM：ユーザーID入力から相手を検索
+    const snap = await db.collection('users').where('userId','==', targetId).get();
+    if (snap.empty) { toast('ユーザーが見つかりません'); return; }
+    const targetUser = snap.docs[0];
+    participants.push(targetUser.id);
+    participantNames.push(targetUser.data().displayName);
 
-  // 既存1対1DM確認（非表示でも復元）
-  if (!isGroup) {
+    // 既存1対1DM確認（非表示でも復元）
     const existing = await db.collection('dms')
       .where('participants','array-contains', currentUser.uid)
       .where('isGroup','==', false)
       .get();
     const found = existing.docs.find(d => d.data().participants.includes(targetUser.id));
     if (found) {
-      // 非表示を解除して復元
       const ref = db.collection('users').doc(currentUser.uid).collection('dmSettings').doc('hidden');
       const hs  = await ref.get();
       let hiddenIds = hs.exists ? (hs.data().dmIds || []) : [];
