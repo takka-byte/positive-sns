@@ -111,7 +111,6 @@ img{max-width:100%}
 .slider-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
 .slider-wrap input[type=range]{accent-color:var(--primary);width:90px}
 .intensity-label{font-weight:600;color:var(--primary);min-width:36px;font-size:13px}
-.filter-wrap{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);margin-left:auto}
 .toggle{position:relative;width:40px;height:22px}
 .toggle input{opacity:0;width:0;height:0}
 .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:11px;cursor:pointer;transition:0.3s}
@@ -283,7 +282,7 @@ img{max-width:100%}
     <div>
       <div style="font-size:60px;margin-bottom:16px">🔧</div>
       <h1>メンテナンス中</h1>
-      <p>現在システムのメンテナンスを行っています。<br>しばらくした後にもう一度アクセスしてください。</p>
+      <p>現在システムのメンテナンスを行っています。<br>しばらく後にもう一度アクセスしてください。</p>
       <p style="margin-top:16px;font-size:13px;color:var(--text2)">運営: たっか</p>
     </div>
   </div>
@@ -316,8 +315,9 @@ img{max-width:100%}
 
         <!-- パスワードリセット -->
         <div class="reset-section">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:10px;text-align:center">パスワードをお忘れの場合は、上のメールアドレス欄に登録したアドレスを入力して↓のボタンを押してください。</p>
           <button class="btn btn-secondary btn-full btn-sm" onclick="doPasswordReset()">🔑 パスワードリセットメールを送る</button>
-          <p style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;line-height:1.6">※パスワードリセットメールは、迷惑メールフォルダに入っている可能性があります。</p>
+          <p style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;line-height:1.6">※メールが届いたら、メール内のリンクをクリックして新しいパスワードを設定してください。</p>
         </div>
       </div>
 
@@ -325,11 +325,11 @@ img{max-width:100%}
       <div id="registerForm" style="display:none">
         <div class="form-group">
           <label class="form-label">ユーザーID（英数字・変更不可）</label>
-          <input class="form-input" id="regUserId" type="text" placeholder="例: apple123" pattern="[a-zA-Z0-9_]+" maxlength="20">
+          <input class="form-input" id="regUserId" type="text" placeholder="例: takka123" pattern="[a-zA-Z0-9_]+" maxlength="20">
         </div>
         <div class="form-group">
           <label class="form-label">表示名</label>
-          <input class="form-input" id="regDisplayName" type="text" placeholder="例: りんご" maxlength="30">
+          <input class="form-input" id="regDisplayName" type="text" placeholder="例: たっか" maxlength="30">
         </div>
         <div class="form-group">
           <label class="form-label">メールアドレス</label>
@@ -381,7 +381,7 @@ img{max-width:100%}
         <span class="icon">⚙️</span> 設定
       </button>
       <button class="nav-item" onclick="showView('admin')" id="nav-admin" style="display:none">
-        <span class="icon">🛡️</span> 管理
+        <span class="icon">🛡️</span> 管理者
       </button>
       <button class="nav-item" onclick="openModal('termsModal')">
         <span class="icon">📄</span> 利用規約
@@ -408,17 +408,6 @@ img{max-width:100%}
               <span>変換強度</span>
               <input type="range" id="intensitySlider" min="0" max="2" value="1" step="1" oninput="updateIntensityLabel()">
               <span class="intensity-label" id="intensityLabel">通常</span>
-            </div>
-            <div class="filter-wrap">
-              <label class="toggle">
-                <input type="checkbox" id="filterToggle" checked onchange="onFilterToggle(event)">
-                <span class="toggle-slider"></span>
-              </label>
-              <span>不謹慎フィルター</span>
-              <div class="tooltip-wrap">
-                <span class="tooltip-icon">?</span>
-                <div class="tooltip-box">発生する不謹慎を防ぎます。</div>
-              </div>
             </div>
           </div>
           <div id="postPreview" style="display:none" class="post-preview">
@@ -890,11 +879,11 @@ async function doRegister() {
   } catch(e) { showLoginError(translateFirebaseError(e.code)); }
 }
 
-// パスワードリセット
+// パスワードリセット（改善版）
 async function doPasswordReset() {
   clearLoginMessages();
   const email = document.getElementById('loginEmail').value.trim();
-  if (!email) { showLoginError('メールアドレス欄にアカウントのメールアドレスを入力してください'); return; }
+  if (!email) { showLoginError('上のメールアドレス欄にアカウントのメールアドレスを入力してください'); return; }
 
   // Firebase Authのactionコード設定（リセット後にログインページへ戻る）
   const actionCodeSettings = {
@@ -904,7 +893,7 @@ async function doPasswordReset() {
 
   try {
     await auth.sendPasswordResetEmail(email, actionCodeSettings);
-    showLoginSuccess('✅ パスワードリセットメールを送信しました！\n\n※メールが届かない場合は迷惑メールフォルダをご確認ください。');
+    showLoginSuccess('✅ パスワードリセットメールを送信しました！\n\nメールが届いたら、メール内の「パスワードをリセット」リンクをクリックして新しいパスワードを設定してください。\n\n※メールが届かない場合は迷惑メールフォルダをご確認ください。');
   } catch(e) {
     if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-email') {
       // セキュリティ上、アドレスが登録済みかどうかを明かさない
@@ -984,50 +973,29 @@ function updateIntensityLabel() {
   document.getElementById('intensityLabel').textContent = INTENSITY_LABELS[v];
 }
 
-// ============================================================
-// 不謹慎フィルタートグル
-// ============================================================
-function onFilterToggle(e) {
-  if (!e.target.checked) {
-    showConfirm(
-      '⚠️ フィルターをOFFにしますか？',
-      '不謹慎フィルターOFFは非推奨です。OFFにすると一部のケースで不適切な変換が行われる場合があります。本当にOFFにしますか？',
-      () => { e.target.checked = false; }
-    );
-    e.target.checked = true;
-  }
-}
 
 // ============================================================
 // Gemini AI 変換
 // ============================================================
-async function callGeminiAPI(text, intensity, useFilter) {
-  const key = APP_CONFIG?.GEMINI_API_KEY;
-  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ Gemini APIキーが設定されていません。');
+// 使用するモデルの優先順位（1番目が制限に達したら2番目へ自動切替）
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-3.1-flash-lite'
+];
 
-  const intensityGuide = {
-    0: 'テキストの語尾や表現を少しポジティブに言い換える程度（マイルド）。元の意味をほぼ保ちつつ、柔らかい表現にする。',
-    1: '感情や考えをポジティブな方向に変換する（通常）。同じ状況を前向きな視点で捉え直す。',
-    2: '元のテキストの原型を留めないほど、思い切りポジティブなメッセージに変換する（極）。'
-  };
-  const filterGuide = useFilter
-    ? `【重要】不謹慎フィルターが有効です。\n- 死亡・事故・病気・災害など深刻な事象を「お祝いや喜び」として表現しないこと。\n- 悲しい出来事には「前に進む力・回復・希望」の方向でポジティブ化すること。\n- 他者の不幸を喜ぶような表現は絶対に避けること。`
-    : '（フィルターなし：できるだけポジティブに変換）';
-
-  const prompt = `あなたはポジティブSNSの文章変換AIです。以下のテキストをポジティブに変換してください。\n\n【変換強度】${intensityGuide[intensity] || intensityGuide[1]}\n\n${filterGuide}\n\n【変換ルール】\n- 変換後のテキストのみを返すこと（説明・前置き不要）\n- 日本語で自然な文章にすること\n- 元のテキストが既にポジティブな場合はそのまま返してよい\n\n【変換するテキスト】\n${text}`;
-
+// 1回のAPIリクエストを実行する内部関数
+async function _fetchGeminiModel(modelName, prompt, key) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
-
+  const timeoutId  = setTimeout(() => controller.abort(), 25000);
   try {
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
       {
         method: 'POST', signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 1024 },
+          generationConfig: { temperature: 0.8, maxOutputTokens: 8192 },
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
             { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -1038,30 +1006,98 @@ async function callGeminiAPI(text, intensity, useFilter) {
       }
     );
     clearTimeout(timeoutId);
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      const errMsg  = errData?.error?.message || '';
-      const lower   = errMsg.toLowerCase();
-      if (resp.status === 429 || lower.includes('quota') || lower.includes('resource_exhausted'))
-        throw new Error('⏳ AIの利用制限に達しました。1分ほど待ってから再試行してください。');
-      if (lower.includes('expired') || lower.includes('renew'))
-        throw new Error('🔑 APIキーの有効期限が切れています。');
-      if (resp.status === 403)
-        throw new Error('🔑 APIキーが無効か権限がありません。');
-      throw new Error(`APIエラー (${resp.status}): ${errMsg}`);
-    }
-    const data   = await resp.json();
-    const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!result) {
-      if (data?.candidates?.[0]?.finishReason === 'SAFETY') return text + '（変換できませんでした：安全フィルターにより制限）';
-      throw new Error('AIからの応答が空でした。もう一度お試しください。');
-    }
-    return result.trim();
+    return { resp, timedOut: false };
   } catch(e) {
     clearTimeout(timeoutId);
-    if (e.name === 'AbortError') throw new Error('⏳ タイムアウトしました。ネットワークを確認して再試行してください。');
+    if (e.name === 'AbortError') return { resp: null, timedOut: true };
     throw e;
   }
+}
+
+// 制限エラーかどうか判定するヘルパー
+function _isQuotaError(status, bodyLower) {
+  return status === 429
+    || bodyLower.includes('quota')
+    || bodyLower.includes('resource_exhausted')
+    || bodyLower.includes('rate_limit');
+}
+
+async function callGeminiAPI(text, intensity) {
+  const key = APP_CONFIG?.GEMINI_API_KEY;
+  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ Gemini APIキーが設定されていません。');
+
+  const intensityGuide = {
+    0: 'テキストの語尾や表現を少しポジティブに言い換える程度（マイルド）。元の意味をほぼ保ちつつ、柔らかい表現にする。',
+    1: '感情や考えをポジティブな方向に変換する（通常）。同じ状況を前向きな視点で捉え直す。',
+    2: '元のテキストの原型を留めないほど、思い切りポジティブなメッセージに変換する（極）。'
+  };
+  // 不謹慎フィルターは常時ON
+  const filterGuide = `【重要】不謹慎フィルターが有効です。\n- 死亡・事故・病気・災害など深刻な事象を「お祝いや喜び」として表現しないこと。\n- 悲しい出来事には「前に進む力・回復・希望」の方向でポジティブ化すること。\n- 他者の不幸を喜ぶような表現は絶対に避けること。`;
+
+  const prompt = `あなたはポジティブSNSの文章変換AIです。以下のテキストをポジティブに変換してください。\n\n【変換強度】${intensityGuide[intensity] || intensityGuide[1]}\n\n${filterGuide}\n\n【変換ルール】\n- 変換後のテキストのみを返すこと（説明・前置き不要）\n- 日本語で自然な文章にすること\n- 元のテキストが既にポジティブな場合はそのまま返してよい\n- 必ず文章を最後まで書き切ること（途中で終わらないこと）\n\n【変換するテキスト】\n${text}`;
+
+  let lastError = null;
+
+  for (let i = 0; i < GEMINI_MODELS.length; i++) {
+    const modelName = GEMINI_MODELS[i];
+    const isFallback = i > 0;
+
+    try {
+      const { resp, timedOut } = await _fetchGeminiModel(modelName, prompt, key);
+
+      if (timedOut) {
+        throw new Error('⏳ タイムアウトしました。ネットワークを確認して再試行してください。');
+      }
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        const errMsg  = errData?.error?.message || '';
+        const lower   = errMsg.toLowerCase();
+
+        // 制限エラーなら次のモデルへフォールバック
+        if (_isQuotaError(resp.status, lower) && i < GEMINI_MODELS.length - 1) {
+          console.warn(`[AI] ${modelName} の利用制限に達しました。${GEMINI_MODELS[i+1]} に切り替えます。`);
+          lastError = errMsg;
+          continue; // 次のモデルへ
+        }
+
+        // 制限エラーで最後のモデルも失敗、またはその他のエラー
+        if (_isQuotaError(resp.status, lower)) {
+          throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
+        }
+        if (lower.includes('expired') || lower.includes('renew')) {
+          throw new Error('🔑 APIキーの有効期限が切れています。');
+        }
+        if (resp.status === 403) {
+          throw new Error('🔑 APIキーが無効か権限がありません。');
+        }
+        throw new Error(`APIエラー (${resp.status}): ${errMsg}`);
+      }
+
+      const data   = await resp.json();
+      const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!result) {
+        if (data?.candidates?.[0]?.finishReason === 'SAFETY') return text + '（変換できませんでした：安全フィルターにより制限）';
+        throw new Error('AIからの応答が空でした。もう一度お試しください。');
+      }
+
+      // フォールバックモデルを使った場合はトーストで通知
+      if (isFallback) {
+        toast(`ℹ️ メインAIが混雑中のため ${modelName} で変換しました`, 4000);
+      }
+      return result.trim();
+
+    } catch(e) {
+      // タイムアウトやネットワークエラーはそのまま投げる（リトライしない）
+      if (e.message.includes('タイムアウト') || e.message.includes('ネットワーク')) throw e;
+      // 最後のモデルでも失敗した場合
+      if (i === GEMINI_MODELS.length - 1) throw e;
+      // それ以外はループを続ける（次のモデルへ）
+      lastError = e.message;
+    }
+  }
+
+  throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
 }
 
 // ============================================================
@@ -1077,9 +1113,8 @@ async function previewConvert() {
   btn.disabled = true; btn.textContent = '✨ 変換中...';
   _previewedConvertedText = null; _previewedOriginalText = null;
   const intensity = parseInt(document.getElementById('intensitySlider').value);
-  const useFilter = document.getElementById('filterToggle').checked;
   try {
-    const result = await callGeminiAPI(text, intensity, useFilter);
+    const result = await callGeminiAPI(text, intensity);
     _previewedConvertedText = result; _previewedOriginalText = text;
     document.getElementById('postPreviewText').textContent = result;
     document.getElementById('postPreview').style.display = '';
@@ -1100,12 +1135,11 @@ async function submitPost() {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '投稿中...';
   const intensity = parseInt(document.getElementById('intensitySlider').value);
-  const useFilter = document.getElementById('filterToggle').checked;
   try {
     await db.collection('posts').add({
       uid: currentUser.uid, userId: currentProfile.userId, displayName: currentProfile.displayName,
       originalText: text, convertedText: _previewedConvertedText,
-      intensity: INTENSITY_LABELS[intensity], useFilter,
+      intensity: INTENSITY_LABELS[intensity],
       toutoi: 0, toutoiUsers: [], goldenBadge: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1485,6 +1519,7 @@ async function startDm() {
 
   const ref = await db.collection('dms').add({
     participants, participantNames, isGroup, groupName,
+    createdBy: currentUser.uid,
     lastMessage: '', createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     updatedAt:   firebase.firestore.FieldValue.serverTimestamp()
   });
@@ -1538,8 +1573,9 @@ async function openGroupSettings(dmId) {
         <button class="btn btn-success btn-sm" onclick="addMemberToGroup('${dmId}')">追加</button>
       </div>
     </div>
-    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-danger btn-sm btn-full" onclick="leaveGroup('${dmId}')">🚪 グループから退出する</button>
+      ${d.createdBy === currentUser.uid ? `<button class="btn btn-danger btn-sm btn-full" onclick="deleteGroup('${dmId}')">🗑️ グループを削除する（作成者のみ）</button>` : ''}
     </div>`;
   openModal('groupSettingsModal');
 }
@@ -1610,6 +1646,28 @@ async function leaveGroup(dmId) {
     }
     toast('✅ グループを退出しました');
     loadDmList();
+  });
+}
+
+async function deleteGroup(dmId) {
+  showConfirm('🗑️ グループを削除', 'このグループを完全に削除しますか？\nメッセージも全て消えます。この操作は取り消せません。', async () => {
+    try {
+      // メッセージを全件削除
+      const msgs = await db.collection('dms').doc(dmId).collection('messages').get();
+      const batch = db.batch();
+      msgs.docs.forEach(doc => batch.delete(doc.ref));
+      batch.delete(db.collection('dms').doc(dmId));
+      await batch.commit();
+
+      closeModal('groupSettingsModal');
+      if (currentDmId === dmId) {
+        currentDmId = null;
+        if (dmUnsubscribe) { dmUnsubscribe(); dmUnsubscribe = null; }
+        document.getElementById('dmChatArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;height:100%">💬 チャットを選択してください</div>';
+      }
+      toast('✅ グループを削除しました');
+      loadDmList();
+    } catch(e) { toast('削除に失敗しました: ' + e.message, 4000); }
   });
 }
 
