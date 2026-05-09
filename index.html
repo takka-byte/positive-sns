@@ -282,8 +282,7 @@ img{max-width:100%}
     <div>
       <div style="font-size:60px;margin-bottom:16px">🔧</div>
       <h1>メンテナンス中</h1>
-      <p>現在システムのメンテナンスを行っています。<br>しばらく後にもう一度アクセスしてください。</p>
-      <p style="margin-top:16px;font-size:13px;color:var(--text2)">運営: たっか</p>
+      <p>現在システムのメンテナンスを行っています。<br>しばらくした後にもう一度アクセスしてください。</p>
     </div>
   </div>
 </div>
@@ -315,7 +314,6 @@ img{max-width:100%}
 
         <!-- パスワードリセット -->
         <div class="reset-section">
-          <p style="font-size:13px;color:var(--text2);margin-bottom:10px;text-align:center">パスワードをお忘れの場合は、上のメールアドレス欄に登録したアドレスを入力して↓のボタンを押してください。</p>
           <button class="btn btn-secondary btn-full btn-sm" onclick="doPasswordReset()">🔑 パスワードリセットメールを送る</button>
           <p style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;line-height:1.6">※メールが届いたら、メール内のリンクをクリックして新しいパスワードを設定してください。</p>
         </div>
@@ -381,7 +379,7 @@ img{max-width:100%}
         <span class="icon">⚙️</span> 設定
       </button>
       <button class="nav-item" onclick="showView('admin')" id="nav-admin" style="display:none">
-        <span class="icon">🛡️</span> 管理者
+        <span class="icon">🛡️</span> 管理
       </button>
       <button class="nav-item" onclick="openModal('termsModal')">
         <span class="icon">📄</span> 利用規約
@@ -402,7 +400,7 @@ img{max-width:100%}
       <div id="view-timeline">
         <div class="feed-header">🏠 ホーム</div>
         <div class="post-box">
-          <textarea class="post-input" id="postInput" placeholder="いまどんな気持ち？ネガティブでもOK！AIがポジティブに変換します✨" rows="3"></textarea>
+          <textarea class="post-input" id="postInput" placeholder="ネガティブでもOK！AIがポジティブに変換します。" rows="3"></textarea>
           <div class="post-tools">
             <div class="slider-wrap">
               <span>変換強度</span>
@@ -491,7 +489,7 @@ img{max-width:100%}
 
       <!-- 管理者パネル -->
       <div id="view-admin" style="display:none">
-        <div class="feed-header">🛡️ 管理者パネル</div>
+        <div class="feed-header">🛡️ 管理パネル</div>
         <div class="tab-bar">
           <button class="tab-btn active" onclick="switchAdminTab('users')">👥 ユーザー</button>
           <button class="tab-btn" onclick="switchAdminTab('posts')">📝 全投稿</button>
@@ -529,7 +527,7 @@ img{max-width:100%}
         <div style="font-weight:700;margin-bottom:10px;font-size:15px">📢 ポジティブSNSについて</div>
         <p style="font-size:13px;color:var(--text2);line-height:1.7">
           ネガティブな気持ちをAIがポジティブに変換してくれるSNSです。<br><br>
-          「尊い（TOUTOI）」で応援しよう！50尊いで🏆ゴールドバッジ獲得！
+          「尊い」で応援しよう！50尊いで🏆ゴールドバッジ獲得！
         </p>
       </div>
     </aside>
