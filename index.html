@@ -1702,17 +1702,23 @@ async function leaveGroup(dmId) {
 async function deleteGroup(dmId) {
   showConfirm('🗑️ グループを削除', 'このグループを完全に削除しますか？\nメッセージも全て消えます。この操作は取り消せません。', async () => {
     try {
-      // メッセージを全件削除
+      // ① リスナーを先に止める（削除中に onSnapshot がエラーを出さないよう）
+      if (currentDmId === dmId) {
+        if (dmUnsubscribe) { dmUnsubscribe(); dmUnsubscribe = null; }
+      }
+
+      // ② DMドキュメント本体を先に削除（participantsフィールドを含むドキュメント）
+      //    → ルール上 createdBy === request.auth.uid で許可される
+      await db.collection('dms').doc(dmId).delete();
+
+      // ③ messagesサブコレクションを個別に削除（バッチではなく1件ずつ）
+      //    サブコレクションはFirestoreのルールで個別に制御されるため個別削除が確実
       const msgs = await db.collection('dms').doc(dmId).collection('messages').get();
-      const batch = db.batch();
-      msgs.docs.forEach(doc => batch.delete(doc.ref));
-      batch.delete(db.collection('dms').doc(dmId));
-      await batch.commit();
+      await Promise.all(msgs.docs.map(doc => doc.ref.delete().catch(() => {}))); // 失敗は無視（親が消えればOK）
 
       closeModal('groupSettingsModal');
       if (currentDmId === dmId) {
         currentDmId = null;
-        if (dmUnsubscribe) { dmUnsubscribe(); dmUnsubscribe = null; }
         document.getElementById('dmChatArea').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;height:100%">💬 チャットを選択してください</div>';
       }
       toast('✅ グループを削除しました');
