@@ -725,6 +725,7 @@ let groupMemberList = []; // {userId, uid, displayName}
 const PAGE_SIZE = 5;
 let timelinePage = 0, timelineAllDocs = [], timelineUserCache = {};
 let adminPostPage = 0, adminPostAllDocs = [];
+let adminDmPage = 0, adminDmAllDocs = [], adminDmMsgCache = {};
 
 // ============================================================
 // ユーティリティ
@@ -1196,6 +1197,7 @@ function renderPager(currentPage, totalPages, ns) {
 function changePage(ns, page) {
   if (ns === 'timelinePage') { timelinePage = page; renderTimelinePage(); document.getElementById('postList').scrollIntoView({behavior:'smooth'}); }
   else if (ns === 'adminPostPage') { adminPostPage = page; renderAdminPostPage(); document.getElementById('adminPostList').scrollIntoView({behavior:'smooth'}); }
+  else if (ns === 'adminDmPage') { adminDmPage = page; renderAdminDmPage(); document.getElementById('adminDmList').scrollIntoView({behavior:'smooth'}); }
 }
 
 function renderPostCard(doc, userCache) {
@@ -1987,23 +1989,44 @@ async function loadAdminDms() {
   const list = document.getElementById('adminDmList');
   if (!list) return;
   list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  const snap = await db.collection('dms').orderBy('updatedAt','desc').limit(30).get();
+  const snap = await db.collection('dms').orderBy('updatedAt','desc').limit(200).get();
   if (snap.empty) { list.innerHTML = '<p>DMなし</p>'; return; }
-  let html = '';
-  for (const doc of snap.docs) {
-    const d = doc.data();
-    const name = d.isGroup ? (d.groupName||'グループDM') : (d.participantNames||[]).join(', ');
+
+  adminDmAllDocs = snap.docs;
+  adminDmPage = 0;
+  adminDmMsgCache = {};
+
+  // 全DMの直近メッセージをまとめて取得してキャッシュ
+  await Promise.all(adminDmAllDocs.map(async doc => {
     const msgs = await db.collection('dms').doc(doc.id).collection('messages').orderBy('createdAt','desc').limit(5).get();
-    const msgHtml = msgs.docs.map(m => {
+    adminDmMsgCache[doc.id] = msgs.docs;
+  }));
+
+  renderAdminDmPage();
+}
+
+function renderAdminDmPage() {
+  const list = document.getElementById('adminDmList');
+  if (!list) return;
+  const totalPages = Math.ceil(adminDmAllDocs.length / PAGE_SIZE);
+  const start = adminDmPage * PAGE_SIZE;
+  const pageDocs = adminDmAllDocs.slice(start, start + PAGE_SIZE);
+
+  const cardsHtml = pageDocs.map(doc => {
+    const d = doc.data();
+    const name = d.isGroup ? (d.groupName || 'グループDM') : (d.participantNames || []).join(', ');
+    const cachedMsgs = adminDmMsgCache[doc.id] || [];
+    const msgHtml = cachedMsgs.map(m => {
       const md = m.data();
       return `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">${escapeHtml(md.displayName||'')}: ${escapeHtml(md.text)}</div>`;
     }).join('');
-    html += `<div class="admin-user-card">
+    return `<div class="admin-user-card">
       <div style="font-weight:700;margin-bottom:8px">${d.isGroup?'👥':'💬'} ${escapeHtml(name)}</div>
       ${msgHtml || '<div style="font-size:13px;color:var(--text2)">メッセージなし</div>'}
     </div>`;
-  }
-  list.innerHTML = html;
+  }).join('');
+
+  list.innerHTML = cardsHtml + renderPager(adminDmPage, totalPages, 'adminDmPage');
 }
 
 async function loadAdminSystem() {
