@@ -491,30 +491,40 @@ img{max-width:100%}
         </div>
         <!-- 利用規約 -->
         <div class="settings-section">
-          <div class="settings-title">📄 利用規約</div>
-          <div class="legal-body" style="max-height:none">
-            <p><strong>サービス名：</strong>ポジティブSNS　／　<strong>運営者：</strong>たっか　／　<strong>最終更新：</strong>2026年5月5日</p>
-            <h3>第1条（利用規約への同意）</h3><p>本利用規約（以下「本規約」）は、たっか（以下「運営者」）が提供するポジティブSNS（以下「本サービス」）の利用条件を定めるものです。ユーザーは本規約に同意した上で本サービスをご利用ください。</p>
-            <h3>第2条（禁止事項）</h3><p>ユーザーは以下の行為を行ってはなりません。<br>①他のユーザーへの誹謗中傷・嫌がらせ<br>②違法・有害なコンテンツの投稿<br>③本サービスのシステムへの不正アクセス<br>④他のユーザーのなりすまし<br>⑤商業目的の無断広告・スパム行為</p>
-            <h3>第3条（コンテンツの取り扱い）</h3><p>ユーザーが投稿したコンテンツの著作権はユーザーに帰属します。ただし、本サービスはサービス改善・運営のため、コンテンツを利用する場合があります。</p>
-            <h3>第4条（AI機能の利用）</h3><p>本サービスはGoogle Gemini APIを使用したAIテキスト変換機能を提供します。AI変換結果の正確性・適切性について運営者は保証しません。</p>
-            <h3>第5条（アカウントの停止・削除）</h3><p>運営者は、本規約に違反したユーザーのアカウントを予告なく停止・削除できるものとします。</p>
-            <h3>第6条（免責事項）</h3><p>本サービスの利用により生じた損害について、運営者は一切の責任を負いません。本サービスは現状有姿で提供されます。</p>
-            <h3>第7条（規約の変更）</h3><p>運営者は予告なく本規約を変更できるものとします。変更後もサービスを利用した場合、変更に同意したものとみなします。</p>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="settings-title" style="margin-bottom:0">📄 利用規約</div>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLegal('termsBody', this)">開く ▼</button>
+          </div>
+          <div id="termsBody" style="display:none;margin-top:14px">
+            <div class="legal-body" style="max-height:none">
+              <p><strong>サービス名：</strong>ポジティブSNS　／　<strong>運営者：</strong>たっか　／　<strong>最終更新：</strong>2026年5月5日</p>
+              <h3>第1条（利用規約への同意）</h3><p>本利用規約（以下「本規約」）は、たっか（以下「運営者」）が提供するポジティブSNS（以下「本サービス」）の利用条件を定めるものです。ユーザーは本規約に同意した上で本サービスをご利用ください。</p>
+              <h3>第2条（禁止事項）</h3><p>ユーザーは以下の行為を行ってはなりません。<br>①他のユーザーへの誹謗中傷・嫌がらせ<br>②違法・有害なコンテンツの投稿<br>③本サービスのシステムへの不正アクセス<br>④他のユーザーのなりすまし<br>⑤商業目的の無断広告・スパム行為</p>
+              <h3>第3条（コンテンツの取り扱い）</h3><p>ユーザーが投稿したコンテンツの著作権はユーザーに帰属します。ただし、本サービスはサービス改善・運営のため、コンテンツを利用する場合があります。</p>
+              <h3>第4条（AI機能の利用）</h3><p>本サービスはGoogle Gemini APIを使用したAIテキスト変換機能を提供します。AI変換結果の正確性・適切性について運営者は保証しません。</p>
+              <h3>第5条（アカウントの停止・削除）</h3><p>運営者は、本規約に違反したユーザーのアカウントを予告なく停止・削除できるものとします。</p>
+              <h3>第6条（免責事項）</h3><p>本サービスの利用により生じた損害について、運営者は一切の責任を負いません。本サービスは現状有姿で提供されます。</p>
+              <h3>第7条（規約の変更）</h3><p>運営者は予告なく本規約を変更できるものとします。変更後もサービスを利用した場合、変更に同意したものとみなします。</p>
+            </div>
           </div>
         </div>
         <!-- プライバシーポリシー -->
         <div class="settings-section">
-          <div class="settings-title">🔒 プライバシーポリシー</div>
-          <div class="legal-body" style="max-height:none">
-            <p><strong>運営者：</strong>たっか　／　<strong>最終更新：</strong>2026年5月5日</p>
-            <h3>1. 収集する情報</h3><p>・メールアドレス（認証のため）<br>・ユーザーID・表示名<br>・投稿内容・DMメッセージ<br>・アクセスログ（Firebase Analytics）</p>
-            <h3>2. 情報の利用目的</h3><p>・本サービスの提供・運営・改善<br>・ユーザー認証・不正利用防止<br>・カスタマーサポートへの対応</p>
-            <h3>3. 第三者提供</h3><p>収集した情報は、法令に基づく場合を除き、第三者へ提供しません。</p>
-            <h3>4. 使用する外部サービス</h3><p>・Firebase（Google LLC）：認証・データ保存<br>・Google Gemini API：AIテキスト変換<br>各サービスのプライバシーポリシーもご確認ください。</p>
-            <h3>5. 投稿内容の管理者閲覧</h3><p>不正利用防止・サービス運営の目的から、管理者は全ての投稿・DMを閲覧できます。</p>
-            <h3>6. 情報の削除</h3><p>アカウントを削除すると、投稿・プロフィール情報が削除されます。</p>
-            <h3>7. お問い合わせ</h3><p>本ポリシーに関するお問い合わせはサービス内DMにてご連絡ください。</p>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="settings-title" style="margin-bottom:0">🔒 プライバシーポリシー</div>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLegal('privacyBody', this)">開く ▼</button>
+          </div>
+          <div id="privacyBody" style="display:none;margin-top:14px">
+            <div class="legal-body" style="max-height:none">
+              <p><strong>運営者：</strong>たっか　／　<strong>最終更新：</strong>2026年5月5日</p>
+              <h3>1. 収集する情報</h3><p>・メールアドレス（認証のため）<br>・ユーザーID・表示名<br>・投稿内容・DMメッセージ<br>・アクセスログ（Firebase Analytics）</p>
+              <h3>2. 情報の利用目的</h3><p>・本サービスの提供・運営・改善<br>・ユーザー認証・不正利用防止<br>・カスタマーサポートへの対応</p>
+              <h3>3. 第三者提供</h3><p>収集した情報は、法令に基づく場合を除き、第三者へ提供しません。</p>
+              <h3>4. 使用する外部サービス</h3><p>・Firebase（Google LLC）：認証・データ保存<br>・Google Gemini API：AIテキスト変換<br>各サービスのプライバシーポリシーもご確認ください。</p>
+              <h3>5. 投稿内容の管理者閲覧</h3><p>不正利用防止・サービス運営の目的から、管理者は全ての投稿・DMを閲覧できます。</p>
+              <h3>6. 情報の削除</h3><p>アカウントを削除すると、投稿・プロフィール情報が削除されます。</p>
+              <h3>7. お問い合わせ</h3><p>本ポリシーに関するお問い合わせはサービス内DMにてご連絡ください。</p>
+            </div>
           </div>
         </div>
       </div>
@@ -2107,9 +2117,9 @@ async function loadCredit() {
   const text = snap.exists ? (snap.data().content || '') : '';
   renderCreditDisplay(text);
 
-  // 管理者のみ編集ボタンを表示
+  // クレジット編集はuserId==='admin'のユーザーのみ（灰色バッジ管理者は除く）
   const editBtn = document.getElementById('creditEditBtn');
-  if (editBtn) editBtn.style.display = currentProfile?.isAdmin ? '' : 'none';
+  if (editBtn) editBtn.style.display = (currentProfile?.userId === 'admin') ? '' : 'none';
 }
 
 function renderCreditDisplay(text) {
@@ -2131,7 +2141,7 @@ function renderCreditDisplay(text) {
 }
 
 async function openCreditEditor() {
-  if (!currentProfile?.isAdmin) return;
+  if (currentProfile?.userId !== 'admin') return;
   const snap = await db.collection('settings').doc('credit').get();
   const text = snap.exists ? (snap.data().content || '') : '';
   document.getElementById('creditEditText').value = text;
@@ -2139,12 +2149,23 @@ async function openCreditEditor() {
 }
 
 async function saveCredit() {
-  if (!currentProfile?.isAdmin) { toast('管理者のみ編集できます'); return; }
+  if (currentProfile?.userId !== 'admin') { toast('編集権限がありません'); return; }
   const text = document.getElementById('creditEditText').value;
   await db.collection('settings').doc('credit').set({ content: text });
   closeModal('creditEditModal');
   renderCreditDisplay(text);
   toast('✅ クレジットを保存しました');
+}
+
+// ============================================================
+// 利用規約・プライバシーポリシー アコーディオン開閉
+// ============================================================
+function toggleLegal(bodyId, btn) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '開く ▼' : '閉じる ▲';
 }
 
 // ============================================================
