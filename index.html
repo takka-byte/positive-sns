@@ -485,9 +485,14 @@ img{max-width:100%}
         </div>
         <!-- クレジット -->
         <div class="settings-section">
-          <div class="settings-title">📝 クレジット</div>
-          <div id="creditDisplay" style="font-size:14px;color:var(--text2);line-height:1.8;white-space:pre-wrap;word-break:break-all"></div>
-          <button class="btn btn-secondary btn-sm" id="creditEditBtn" style="margin-top:10px;display:none" onclick="openCreditEditor()">✏️ クレジットを編集</button>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="settings-title" style="margin-bottom:0">📝 クレジット</div>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLegal('creditBody', this)">開く ▼</button>
+          </div>
+          <div id="creditBody" style="display:none;margin-top:14px">
+            <div id="creditDisplay" style="font-size:14px;color:var(--text2);line-height:1.8;white-space:pre-wrap;word-break:break-all"></div>
+            <button class="btn btn-secondary btn-sm" id="creditEditBtn" style="margin-top:10px;display:none" onclick="openCreditEditor()">✏️ クレジットを編集</button>
+          </div>
         </div>
         <!-- 利用規約 -->
         <div class="settings-section">
