@@ -16,7 +16,8 @@
 <!-- ===== CONFIG (APIキー) ===== -->
 <script>
 const APP_CONFIG = {
-  GEMINI_API_KEY: "%%GEMINI_API_KEY%%",
+  // Cloudflare Worker の URL（デプロイ後に設定）
+  WORKER_URL: "%%WORKER_URL%%",
   firebase: {
     apiKey:            "%%FIREBASE_API_KEY%%",
     authDomain:        "%%FIREBASE_AUTH_DOMAIN%%",
@@ -1041,42 +1042,10 @@ function updateIntensityLabel() {
 // ============================================================
 // Gemini AI 変換
 // ============================================================
-// 使用するモデルの優先順位（1番目が制限に達したら2番目へ自動切替）
-const GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-3.1-flash-lite'
-];
-
-// 1回のAPIリクエストを実行する内部関数
-async function _fetchGeminiModel(modelName, prompt, key) {
-  const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 25000);
-  try {
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`,
-      {
-        method: 'POST', signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 8192 },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
-          ]
-        })
-      }
-    );
-    clearTimeout(timeoutId);
-    return { resp, timedOut: false };
-  } catch(e) {
-    clearTimeout(timeoutId);
-    if (e.name === 'AbortError') return { resp: null, timedOut: true };
-    throw e;
-  }
-}
+// ============================================================
+// Gemini AI 変換（Cloudflare Worker 経由）
+// APIキーは Worker 側に隠されているため、ここには含まれません
+// ============================================================
 
 // 制限エラーかどうか判定するヘルパー
 function _isQuotaError(status, bodyLower) {
@@ -1087,8 +1056,10 @@ function _isQuotaError(status, bodyLower) {
 }
 
 async function callGeminiAPI(text, intensity) {
-  const key = APP_CONFIG?.GEMINI_API_KEY;
-  if (!key || key.includes('%%') || key === '') throw new Error('⚙️ Gemini APIキーが設定されていません。');
+  const workerUrl = APP_CONFIG?.WORKER_URL;
+  if (!workerUrl || workerUrl.includes('%%') || workerUrl === '') {
+    throw new Error('⚙️ Worker URLが設定されていません。GitHub SecretsにWORKER_URLを設定してください。');
+  }
 
   const intensityGuide = {
     0: 'テキストの語尾や表現を少しポジティブに言い換える程度（マイルド）。元の意味をほぼ保ちつつ、柔らかい表現にする。',
@@ -1100,68 +1071,55 @@ async function callGeminiAPI(text, intensity) {
 
   const prompt = `あなたはポジティブSNSの文章変換AIです。以下のテキストをポジティブに変換してください。\n\n【変換強度】${intensityGuide[intensity] || intensityGuide[1]}\n\n${filterGuide}\n\n【変換ルール】\n- 変換後のテキストのみを返すこと（説明・前置き不要）\n- 日本語で自然な文章にすること\n- 元のテキストが既にポジティブな場合はそのまま返してよい\n- 必ず文章を最後まで書き切ること（途中で終わらないこと）\n\n【変換するテキスト】\n${text}`;
 
-  let lastError = null;
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 30000);
 
-  for (let i = 0; i < GEMINI_MODELS.length; i++) {
-    const modelName = GEMINI_MODELS[i];
-    const isFallback = i > 0;
+  try {
+    const resp = await fetch(workerUrl, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    clearTimeout(timeoutId);
 
-    try {
-      const { resp, timedOut } = await _fetchGeminiModel(modelName, prompt, key);
+    const data = await resp.json().catch(() => ({}));
 
-      if (timedOut) {
-        throw new Error('⏳ タイムアウトしました。ネットワークを確認して再試行してください。');
+    if (!resp.ok) {
+      const errMsg = data?.error || '';
+      const lower  = errMsg.toLowerCase();
+      if (_isQuotaError(resp.status, lower)) {
+        throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
       }
-
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        const errMsg  = errData?.error?.message || '';
-        const lower   = errMsg.toLowerCase();
-
-        // 制限エラーなら次のモデルへフォールバック
-        if (_isQuotaError(resp.status, lower) && i < GEMINI_MODELS.length - 1) {
-          console.warn(`[AI] ${modelName} の利用制限に達しました。${GEMINI_MODELS[i+1]} に切り替えます。`);
-          lastError = errMsg;
-          continue; // 次のモデルへ
-        }
-
-        // 制限エラーで最後のモデルも失敗、またはその他のエラー
-        if (_isQuotaError(resp.status, lower)) {
-          throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
-        }
-        if (lower.includes('expired') || lower.includes('renew')) {
-          throw new Error('🔑 APIキーの有効期限が切れています。');
-        }
-        if (resp.status === 403) {
-          throw new Error('🔑 APIキーが無効か権限がありません。');
-        }
-        throw new Error(`APIエラー (${resp.status}): ${errMsg}`);
+      if (resp.status === 403) {
+        throw new Error('🔑 アクセスが拒否されました。Worker の設定を確認してください。');
       }
-
-      const data   = await resp.json();
-      const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!result) {
-        if (data?.candidates?.[0]?.finishReason === 'SAFETY') return text + '（変換できませんでした：安全フィルターにより制限）';
-        throw new Error('AIからの応答が空でした。もう一度お試しください。');
+      if (resp.status === 500 || resp.status === 503) {
+        throw new Error('⚙️ AIサーバーでエラーが発生しました。しばらく待ってから再試行してください。');
       }
-
-      // フォールバックモデルを使った場合はトーストで通知
-      if (isFallback) {
-        toast(`ℹ️ メインAIが混雑中のため ${modelName} で変換しました`, 4000);
-      }
-      return result.trim();
-
-    } catch(e) {
-      // タイムアウトやネットワークエラーはそのまま投げる（リトライしない）
-      if (e.message.includes('タイムアウト') || e.message.includes('ネットワーク')) throw e;
-      // 最後のモデルでも失敗した場合
-      if (i === GEMINI_MODELS.length - 1) throw e;
-      // それ以外はループを続ける（次のモデルへ）
-      lastError = e.message;
+      throw new Error(`エラー (${resp.status}): ${errMsg}`);
     }
-  }
 
-  throw new Error('⏳ 全てのAIモデルの利用制限に達しました。しばらく待ってから再試行してください。');
+    const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!result) {
+      if (data?.candidates?.[0]?.finishReason === 'SAFETY') {
+        return text + '（変換できませんでした：安全フィルターにより制限）';
+      }
+      throw new Error('AIからの応答が空でした。もう一度お試しください。');
+    }
+
+    // フォールバックモデルが使われた場合はトーストで通知
+    if (data?.usedModel && data.usedModel !== 'gemini-2.5-flash') {
+      toast(`ℹ️ メインAIが混雑中のため ${data.usedModel} で変換しました`, 4000);
+    }
+
+    return result.trim();
+
+  } catch(e) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') throw new Error('⏳ タイムアウトしました。ネットワークを確認して再試行してください。');
+    throw e;
+  }
 }
 
 // ============================================================
