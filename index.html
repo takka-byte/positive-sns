@@ -540,7 +540,7 @@ img{max-width:100%}
         <div class="tab-bar">
           <button class="tab-btn active" onclick="switchAdminTab('users')">👥 ユーザー</button>
           <button class="tab-btn" onclick="switchAdminTab('posts')">📝 全投稿</button>
-          <button class="tab-btn" id="adminTabDmsBtn" onclick="switchAdminTab('dms')">💬 全DM</button>
+          <button class="tab-btn" id="adminTabDmsBtn" onclick="switchAdminTab('dms')" style="display:none">💬 全DM</button>
           <button class="tab-btn" onclick="switchAdminTab('system')">🔧 システム</button>
         </div>
         <div id="adminTab-users" class="tab-content active" style="padding:16px">
@@ -562,6 +562,7 @@ img{max-width:100%}
                 <span class="toggle-slider"></span>
               </label>
               <span id="maintenanceStatus">オフ</span>
+              <span id="maintenanceAdminNote" style="display:none;font-size:12px;color:var(--danger)">※ adminユーザーのみ操作できます</span>
             </div>
           </div>
         </div>
@@ -2094,7 +2095,17 @@ async function loadAdminSystem() {
   const snap = await db.collection('settings').doc('maintenance').get();
   const isOn = snap.exists && snap.data().isActive;
   const toggle = document.getElementById('maintenanceToggle');
-  if (toggle) { toggle.checked = isOn; document.getElementById('maintenanceStatus').textContent = isOn ? 'オン（メンテナンス中）' : 'オフ'; }
+  const note   = document.getElementById('maintenanceAdminNote');
+  const isStrictAdmin = currentProfile?.userId === 'admin';
+  if (toggle) {
+    toggle.checked  = isOn;
+    toggle.disabled = !isStrictAdmin;
+    // グレーアウト：admin以外はトグルを薄くして操作不可に
+    toggle.parentElement.style.opacity = isStrictAdmin ? '1' : '0.4';
+    toggle.parentElement.style.cursor  = isStrictAdmin ? '' : 'not-allowed';
+  }
+  if (note) note.style.display = isStrictAdmin ? 'none' : '';
+  document.getElementById('maintenanceStatus').textContent = isOn ? 'オン（メンテナンス中）' : 'オフ';
 }
 
 async function toggleMaintenance() {
