@@ -540,7 +540,7 @@ img{max-width:100%}
         <div class="tab-bar">
           <button class="tab-btn active" onclick="switchAdminTab('users')">👥 ユーザー</button>
           <button class="tab-btn" onclick="switchAdminTab('posts')">📝 全投稿</button>
-          <button class="tab-btn" onclick="switchAdminTab('dms')">💬 全DM</button>
+          <button class="tab-btn" id="adminTabDmsBtn" onclick="switchAdminTab('dms')">💬 全DM</button>
           <button class="tab-btn" onclick="switchAdminTab('system')">🔧 システム</button>
         </div>
         <div id="adminTab-users" class="tab-content active" style="padding:16px">
@@ -1912,6 +1912,9 @@ function switchAdminTab(name) {
 
 function loadAdmin() {
   if (!currentProfile?.isAdmin) return;
+  // 全DMタブはuserId==='admin'のみ表示
+  const dmTabBtn = document.getElementById('adminTabDmsBtn');
+  if (dmTabBtn) dmTabBtn.style.display = (currentProfile?.userId === 'admin') ? '' : 'none';
   loadAdminUsers();
   loadAdminSystem();
 }
@@ -1938,7 +1941,7 @@ async function loadAdminUsers() {
       <div class="admin-actions">
         <button class="btn btn-secondary btn-sm" onclick="toggleFreezeUser('${doc.id}',${d.isFrozen})">${d.isFrozen?'凍結解除':'凍結'}</button>
         <button class="btn btn-secondary btn-sm" onclick="openBadgeModal('${doc.id}','${escapeHtml(d.displayName)}')">🏅 バッジ</button>
-        <button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${doc.id}','${escapeHtml(d.displayName)}')">削除</button>
+        ${d.userId !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${doc.id}','${escapeHtml(d.displayName)}')">削除</button>` : '<span style="font-size:12px;color:var(--text2)">※削除不可</span>'}
       </div>
     </div>`;
   }).join('');
@@ -1953,6 +1956,11 @@ async function toggleFreezeUser(uid, isFrozen) {
 }
 
 async function adminDeleteUser(uid, name) {
+  // adminアカウントは削除不可
+  const snap = await db.collection('users').doc(uid).get();
+  if (snap.exists && snap.data().userId === 'admin') {
+    toast('⚠️ adminアカウントは削除できません'); return;
+  }
   showConfirm('ユーザー削除', `${name} のデータを削除しますか？（Firestore上のデータのみ）`, async () => {
     await db.collection('users').doc(uid).delete();
     toast('✅ ユーザーデータを削除しました'); loadAdminUsers();
@@ -2036,6 +2044,11 @@ async function adminDeletePost(postId) {
 async function loadAdminDms() {
   const list = document.getElementById('adminDmList');
   if (!list) return;
+  // 全DM閲覧はuserId==='admin'のユーザーのみ（灰色バッジ管理者は除く）
+  if (currentProfile?.userId !== 'admin') {
+    list.innerHTML = '<div style="padding:20px;color:var(--text2);font-size:14px">⚠️ 全DMの閲覧はadminユーザーのみ利用できます。</div>';
+    return;
+  }
   list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   const snap = await db.collection('dms').orderBy('updatedAt','desc').limit(200).get();
   if (snap.empty) { list.innerHTML = '<p>DMなし</p>'; return; }
@@ -2085,6 +2098,13 @@ async function loadAdminSystem() {
 }
 
 async function toggleMaintenance() {
+  // メンテナンスON/OFFはuserId==='admin'のみ（灰色バッジ管理者は除く）
+  if (currentProfile?.userId !== 'admin') {
+    toast('⚠️ メンテナンスモードの操作はadminユーザーのみ利用できます');
+    // トグルを元の状態に戻す
+    await loadAdminSystem();
+    return;
+  }
   const isOn = document.getElementById('maintenanceToggle').checked;
   if (isOn) {
     showConfirm('メンテナンスモード ON', '全ユーザーのアクセスを遮断します。本当に有効にしますか？', async () => {
