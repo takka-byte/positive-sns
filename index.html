@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta name="google-site-verification" content="nlmbo8b-q4g90_NSZ3tt-7Daii-omfJGn0LqhMDL4dU" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ポジティブSNS</title>
@@ -452,9 +451,10 @@ img{max-width:100%}
             <div class="post-preview-label">✨ AI変換プレビュー</div>
             <div id="postPreviewText"></div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:10px">
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
             <button class="btn btn-secondary btn-sm" onclick="previewConvert()" id="previewBtn">✨ AIプレビュー</button>
             <button class="btn btn-primary btn-sm" onclick="submitPost()" id="submitBtn">投稿する</button>
+            <span id="conversionCounter" style="font-size:12px;color:var(--text2);margin-left:auto"></span>
           </div>
         </div>
         <div id="postList">
@@ -518,6 +518,19 @@ img{max-width:100%}
               <span class="toggle-slider"></span>
             </label>
             <span>ダークモード</span>
+          </div>
+        </div>
+        <!-- 限定コード -->
+        <div class="settings-section">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="settings-title" style="margin-bottom:0">🎟️ 限定コード</div>
+            <button class="btn btn-secondary btn-sm" id="codeAdminBtn" onclick="openModal('codeAdminModal')" style="display:none">⚙️ コード管理</button>
+          </div>
+          <p style="font-size:13px;color:var(--text2);margin:10px 0 8px">限定コードを入力すると、AI変換回数がアップグレードされます。</p>
+          <div id="currentConversionInfo" style="font-size:13px;margin-bottom:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius-sm)"></div>
+          <div style="display:flex;gap:6px">
+            <input class="form-input" id="codeInput" type="text" placeholder="コードを入力" maxlength="30" style="flex:1;font-size:14px">
+            <button class="btn btn-primary btn-sm" onclick="redeemCode()">引き換える</button>
           </div>
         </div>
         <div class="settings-section">
@@ -723,6 +736,40 @@ img{max-width:100%}
   </div>
 </div>
 
+<!-- コード管理モーダル（admin用） -->
+<div class="modal-overlay" id="codeAdminModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">🎟️ 限定コード管理</div>
+      <button class="modal-close" onclick="closeModal('codeAdminModal')">✕</button>
+    </div>
+    <!-- コード作成 -->
+    <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">➕ 新しいコードを作成</div>
+      <div class="form-group">
+        <label class="form-label">コード文字列（自由入力）</label>
+        <input class="form-input" id="newCodeStr" type="text" placeholder="例: HAPPY2026" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label class="form-label">付与する変換回数</label>
+        <select class="form-input" id="newCodeValue">
+          <option value="10">10回/日</option>
+          <option value="20">20回/日</option>
+          <option value="50">50回/日</option>
+          <option value="100">100回/日</option>
+          <option value="0">無制限</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="createCode()">作成する</button>
+    </div>
+    <!-- コード一覧 -->
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px">📋 作成済みコード一覧</div>
+    <div id="codeList" style="max-height:300px;overflow-y:auto">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
 <!-- クレジット編集モーダル（管理者用） -->
 <div class="modal-overlay" id="creditEditModal">
   <div class="modal">
@@ -840,7 +887,10 @@ function toast(msg, duration = 3000) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), duration);
 }
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'codeAdminModal') loadCodeList();
+}
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function showConfirm(title, msg, onOk) {
@@ -909,7 +959,7 @@ function showView(name) {
   });
   // モバイルボタン
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  if (name === 'timeline') loadTimeline();
+  if (name === 'timeline') { loadTimeline(); updateConversionCounter(); }
   if (name === 'notices')  loadNotices();
   if (name === 'dm')       loadDmList();
   if (name === 'admin')    loadAdmin();
@@ -917,6 +967,7 @@ function showView(name) {
     const inp = document.getElementById('settingsDisplayName');
     if (inp && currentProfile) inp.value = currentProfile.displayName || '';
     loadCredit();
+    loadConversionSettings();
   }
 }
 
@@ -1071,6 +1122,7 @@ auth.onAuthStateChanged(async (user) => {
 
   applyTheme();
   showView('timeline');
+  updateConversionCounter();
 });
 
 // ============================================================
@@ -1210,6 +1262,11 @@ let _previewedOriginalText  = null;
 async function previewConvert() {
   const text = document.getElementById('postInput').value.trim();
   if (!text) { toast('テキストを入力してください'); return; }
+
+  // 変換回数チェック
+  const canConvert = await incrementConversionCount();
+  if (!canConvert) return;
+
   const btn = document.getElementById('previewBtn');
   btn.disabled = true; btn.textContent = '✨ 変換中...';
   _previewedConvertedText = null; _previewedOriginalText = null;
@@ -1220,7 +1277,7 @@ async function previewConvert() {
     document.getElementById('postPreviewText').textContent = result;
     document.getElementById('postPreview').style.display = '';
   } catch(e) { toast('⚠️ ' + e.message, 5000); }
-  finally { btn.disabled = false; btn.textContent = '✨ AIプレビュー'; }
+  finally { btn.disabled = false; btn.textContent = '✨ AIプレビュー'; await updateConversionCounter(); }
 }
 
 // ============================================================
@@ -2207,6 +2264,208 @@ async function toggleMaintenance() {
     document.getElementById('maintenanceStatus').textContent = 'オフ';
     toast('✅ メンテナンスモードを解除しました');
   }
+}
+
+// ============================================================
+// 変換回数管理
+// ============================================================
+
+// JSTの今日の日付を "YYYY-MM-DD" 形式で返す
+function getTodayJST() {
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().slice(0, 10);
+}
+
+// ユーザーの変換情報を取得（なければ初期化）
+async function getConversionInfo() {
+  const snap = await db.collection('users').doc(currentUser.uid).get();
+  const d = snap.data() || {};
+  const today = getTodayJST();
+
+  // 無制限フラグがある場合
+  if (d.conversionUnlimited) {
+    return { count: 0, limit: Infinity, unlimited: true, today };
+  }
+
+  const limit = d.conversionLimit || 5;
+  let count = d.conversionCount || 0;
+  const savedDate = d.conversionDate || '';
+
+  // 日付が変わっていたらカウントリセット
+  if (savedDate !== today) {
+    count = 0;
+    await db.collection('users').doc(currentUser.uid).update({
+      conversionCount: 0,
+      conversionDate: today
+    });
+  }
+
+  return { count, limit, unlimited: false, today };
+}
+
+// 変換回数カウンター表示を更新
+async function updateConversionCounter() {
+  const el = document.getElementById('conversionCounter');
+  if (!el) return;
+  const info = await getConversionInfo();
+  if (info.unlimited) {
+    el.textContent = '✨ 変換回数: 無制限';
+    el.style.color = 'var(--primary)';
+  } else {
+    const remaining = info.limit - info.count;
+    el.textContent = `✨ 今日の変換: ${info.count}/${info.limit}回`;
+    el.style.color = remaining <= 0 ? 'var(--danger)' : 'var(--text2)';
+  }
+}
+
+// 変換回数を1増やす（変換前に呼ぶ）
+async function incrementConversionCount() {
+  const info = await getConversionInfo();
+  if (info.unlimited) return true; // 無制限は常にOK
+
+  if (info.count >= info.limit) {
+    toast(`⚠️ 今日の変換回数（${info.limit}回）を使い切りました。日本時間の0時に補充されます。`, 4000);
+    return false;
+  }
+
+  await db.collection('users').doc(currentUser.uid).update({
+    conversionCount: info.count + 1,
+    conversionDate: info.today
+  });
+  return true;
+}
+
+// ============================================================
+// 限定コード機能
+// ============================================================
+
+// 設定画面を開いた時に変換情報・コード管理ボタン表示
+async function loadConversionSettings() {
+  // コード管理ボタン（adminのみ）
+  const adminBtn = document.getElementById('codeAdminBtn');
+  if (adminBtn) adminBtn.style.display = (currentProfile?.userId === 'admin') ? '' : 'none';
+
+  // 現在の変換情報表示
+  const infoEl = document.getElementById('currentConversionInfo');
+  if (!infoEl) return;
+  const info = await getConversionInfo();
+  if (info.unlimited) {
+    infoEl.innerHTML = '🎟️ <strong>無制限コード適用中</strong>：変換回数の制限がありません';
+  } else if (info.limit > 5) {
+    infoEl.innerHTML = `🎟️ <strong>プレミアムコード適用中</strong>：1日${info.limit}回変換できます（今日残り${info.limit - info.count}回）`;
+  } else {
+    infoEl.innerHTML = `📊 現在の変換回数：${info.count}/${info.limit}回（今日残り${info.limit - info.count}回）`;
+  }
+}
+
+// コード引き換え
+async function redeemCode() {
+  const code = document.getElementById('codeInput').value.trim();
+  if (!code) { toast('コードを入力してください'); return; }
+
+  const snap = await db.collection('codes').doc(code).get();
+  if (!snap.exists) { toast('❌ コードが見つかりません'); return; }
+
+  const d = snap.data();
+  if (!d.isActive) { toast('❌ このコードは無効です'); return; }
+
+  // 既に使用済みか確認
+  const usedBy = d.usedBy || [];
+  if (usedBy.includes(currentUser.uid)) { toast('❌ このコードは既に使用しています'); return; }
+
+  // コードを適用
+  const isUnlimited = d.value === 0;
+  await db.collection('users').doc(currentUser.uid).update({
+    conversionLimit:     isUnlimited ? 5 : d.value,  // 上書き
+    conversionUnlimited: isUnlimited,
+    conversionCount:     0,  // カウントもリセット
+    conversionDate:      getTodayJST()
+  });
+
+  // 使用済みに記録
+  await db.collection('codes').doc(code).update({
+    usedBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+    usedCount: firebase.firestore.FieldValue.increment(1)
+  });
+
+  document.getElementById('codeInput').value = '';
+  const msg = isUnlimited ? '🎉 無制限コードを適用しました！' : `🎉 コードを適用しました！1日${d.value}回変換できます。`;
+  toast(msg, 4000);
+  await loadConversionSettings();
+  await updateConversionCounter();
+}
+
+// コード作成（adminのみ）
+async function createCode() {
+  if (currentProfile?.userId !== 'admin') { toast('権限がありません'); return; }
+  const codeStr = document.getElementById('newCodeStr').value.trim();
+  const value   = parseInt(document.getElementById('newCodeValue').value);
+  if (!codeStr) { toast('コード文字列を入力してください'); return; }
+  if (!/^[a-zA-Z0-9_\-]+$/.test(codeStr)) { toast('コードは英数字・ハイフン・アンダーバーのみ使用できます'); return; }
+
+  // 既存コード確認
+  const existing = await db.collection('codes').doc(codeStr).get();
+  if (existing.exists) { toast('❌ そのコードは既に存在します'); return; }
+
+  await db.collection('codes').doc(codeStr).set({
+    value,
+    isActive: true,
+    usedBy: [],
+    usedCount: 0,
+    createdBy: currentUser.uid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  document.getElementById('newCodeStr').value = '';
+  toast('✅ コードを作成しました');
+  loadCodeList();
+}
+
+// コード一覧表示（adminのみ）
+async function loadCodeList() {
+  const list = document.getElementById('codeList');
+  if (!list) return;
+  list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  const snap = await db.collection('codes').orderBy('createdAt', 'desc').get();
+  if (snap.empty) { list.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:8px">コードはまだありません</div>'; return; }
+
+  list.innerHTML = snap.docs.map(doc => {
+    const d = doc.data();
+    const valueLabel = d.value === 0 ? '無制限' : `${d.value}回/日`;
+    const statusLabel = d.isActive
+      ? '<span style="color:var(--success);font-weight:700">有効</span>'
+      : '<span style="color:var(--danger);font-weight:700">無効</span>';
+    return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;background:var(--bg)">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <code style="font-size:14px;font-weight:700;background:var(--bg3);padding:2px 8px;border-radius:6px">${escapeHtml(doc.id)}</code>
+        <span style="font-size:13px;color:var(--primary)">${valueLabel}</span>
+        ${statusLabel}
+        <span style="font-size:12px;color:var(--text2)">使用: ${d.usedCount || 0}回</span>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" style="padding:3px 10px;font-size:12px" onclick="toggleCodeActive('${doc.id}',${d.isActive})">${d.isActive ? '無効化' : '有効化'}</button>
+          <button class="btn btn-danger btn-sm" style="padding:3px 10px;font-size:12px" onclick="deleteCode('${doc.id}')">削除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// コード有効/無効切り替え
+async function toggleCodeActive(codeId, isActive) {
+  await db.collection('codes').doc(codeId).update({ isActive: !isActive });
+  toast(`✅ コードを${isActive ? '無効' : '有効'}化しました`);
+  loadCodeList();
+}
+
+// コード削除
+async function deleteCode(codeId) {
+  showConfirm('コードを削除', `「${codeId}」を削除しますか？`, async () => {
+    await db.collection('codes').doc(codeId).delete();
+    toast('✅ 削除しました');
+    loadCodeList();
+  });
 }
 
 // ============================================================
