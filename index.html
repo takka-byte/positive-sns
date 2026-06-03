@@ -274,6 +274,26 @@ img{max-width:100%}
 .bottom-nav-btn .icon{font-size:22px}
 @media(max-width:700px){.bottom-nav{display:block}.main-layout{padding-bottom:70px}}
 
+/* ---------- 通知バッジ ---------- */
+.nav-notif-badge{
+  display:none;background:var(--danger);color:#fff;
+  font-size:10px;font-weight:700;min-width:18px;height:18px;
+  border-radius:9px;padding:0 4px;
+  align-items:center;justify-content:center;
+  margin-left:auto;
+}
+.nav-notif-badge.show{display:flex}
+
+/* ---------- 通知カード ---------- */
+.notif-card{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);transition:background 0.2s;cursor:pointer}
+.notif-card:hover{background:var(--bg3)}
+.notif-card.unread{border-left:3px solid var(--primary);background:rgba(108,99,255,0.04)}
+.notif-card-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.notif-icon{font-size:18px}
+.notif-title{font-weight:700;font-size:14px;flex:1}
+.notif-time{font-size:11px;color:var(--text2);white-space:nowrap}
+.notif-body{font-size:13px;color:var(--text2);line-height:1.5}
+
 /* ---------- ボタン波紋アニメーション ---------- */
 .btn{position:relative;overflow:hidden}
 .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);border-radius:inherit;transition:background 0.3s}
@@ -409,8 +429,13 @@ img{max-width:100%}
       <button class="nav-item" onclick="showView('notices')" id="nav-notices">
         <span class="icon">📢</span> お知らせ
       </button>
+      <button class="nav-item" onclick="showView('notifications')" id="nav-notifications">
+        <span class="icon">🔔</span> 通知
+        <span class="nav-notif-badge" id="notifBadge"></span>
+      </button>
       <button class="nav-item" onclick="showView('dm')" id="nav-dm">
         <span class="icon">💬</span> メッセージ
+        <span class="nav-notif-badge" id="dmBadge"></span>
       </button>
       <button class="nav-item" onclick="showView('settings')" id="nav-settings">
         <span class="icon">⚙️</span> 設定
@@ -469,6 +494,17 @@ img{max-width:100%}
           <button class="btn btn-primary btn-sm" id="noticePostBtn" onclick="openModal('noticePostModal')" style="display:none">＋ 投稿</button>
         </div>
         <div id="noticeList">
+          <div class="loading"><div class="spinner"></div>読み込み中...</div>
+        </div>
+      </div>
+
+      <!-- 通知 -->
+      <div id="view-notifications" style="display:none">
+        <div class="feed-header">
+          <span>🔔 通知</span>
+          <button class="btn btn-secondary btn-sm" onclick="markAllNotifsRead()">すべて既読</button>
+        </div>
+        <div id="notificationList">
           <div class="loading"><div class="spinner"></div>読み込み中...</div>
         </div>
       </div>
@@ -641,7 +677,8 @@ img{max-width:100%}
     <div class="bottom-nav-inner">
       <button class="bottom-nav-btn active" onclick="showView('timeline')"><span class="icon">🏠</span>ホーム</button>
       <button class="bottom-nav-btn" onclick="showView('notices')"><span class="icon">📢</span>お知らせ</button>
-      <button class="bottom-nav-btn" onclick="showView('dm')"><span class="icon">💬</span>DM</button>
+      <button class="bottom-nav-btn" onclick="showView('notifications')" style="position:relative"><span class="icon">🔔</span>通知<span class="nav-notif-badge" id="notifBadgeMobile" style="position:absolute;top:2px;right:8px"></span></button>
+      <button class="bottom-nav-btn" onclick="showView('dm')" style="position:relative"><span class="icon">💬</span>DM<span class="nav-notif-badge" id="dmBadgeMobile" style="position:absolute;top:2px;right:8px"></span></button>
       <button class="bottom-nav-btn" onclick="showView('settings')"><span class="icon">⚙️</span>設定</button>
       <button class="bottom-nav-btn" onclick="showView('admin')" id="mobileAdminBtn" style="display:none"><span class="icon">🛡️</span>管理</button>
     </div>
@@ -951,7 +988,7 @@ function toggleThemeFromSettings() {
 // ビュー切替
 // ============================================================
 function showView(name) {
-  ['timeline','notices','dm','settings','admin'].forEach(v => {
+  ['timeline','notices','notifications','dm','settings','admin'].forEach(v => {
     const el = document.getElementById('view-'+v);
     if (el) el.style.display = v === name ? 'block' : 'none';
     const nav = document.getElementById('nav-'+v);
@@ -959,10 +996,11 @@ function showView(name) {
   });
   // モバイルボタン
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  if (name === 'timeline') { loadTimeline(); updateConversionCounter(); }
-  if (name === 'notices')  loadNotices();
-  if (name === 'dm')       loadDmList();
-  if (name === 'admin')    loadAdmin();
+  if (name === 'timeline')      { loadTimeline(); updateConversionCounter(); }
+  if (name === 'notices')       loadNotices();
+  if (name === 'notifications') loadNotifications();
+  if (name === 'dm')            loadDmList();
+  if (name === 'admin')         loadAdmin();
   if (name === 'settings') {
     const inp = document.getElementById('settingsDisplayName');
     if (inp && currentProfile) inp.value = currentProfile.displayName || '';
@@ -1062,8 +1100,10 @@ async function doPasswordReset() {
 }
 
 async function doLogout() {
-  if (postsUnsubscribe) { postsUnsubscribe(); postsUnsubscribe = null; }
-  if (dmUnsubscribe)    { dmUnsubscribe();    dmUnsubscribe    = null; }
+  if (postsUnsubscribe)    { postsUnsubscribe();    postsUnsubscribe    = null; }
+  if (dmUnsubscribe)       { dmUnsubscribe();       dmUnsubscribe       = null; }
+  if (notifUnsubscribe)    { notifUnsubscribe();    notifUnsubscribe    = null; }
+  if (dmUnreadUnsubscribe) { dmUnreadUnsubscribe(); dmUnreadUnsubscribe = null; }
   await auth.signOut();
 }
 
@@ -1123,6 +1163,8 @@ auth.onAuthStateChanged(async (user) => {
   applyTheme();
   showView('timeline');
   updateConversionCounter();
+  startNotifListener();
+  startDmUnreadListener();
 });
 
 // ============================================================
@@ -1436,6 +1478,16 @@ async function toggleToutoi(postId) {
   await ref.update({ toutoiUsers: newUsers, toutoi: newUsers.length, goldenBadge: newUsers.length >= 50 });
   const btn = document.querySelector(`#post-${postId} .toutoi-btn`);
   if (btn && !alreadyLiked) { btn.classList.add('pulse'); setTimeout(() => btn.classList.remove('pulse'), 400); }
+
+  // 尊いを押したとき（外したときは通知しない）投稿主に通知
+  if (!alreadyLiked && d.uid && d.uid !== currentUser.uid) {
+    await sendNotification(d.uid, {
+      type:     'toutoi',
+      fromUid:  currentUser.uid,
+      fromName: currentProfile.displayName,
+      postId:   postId
+    });
+  }
 }
 
 async function deletePost(postId) {
@@ -1500,7 +1552,7 @@ async function postNotice() {
   if (!title) { toast('タイトルを入力してください'); return; }
   if (!body)  { toast('本文を入力してください');     return; }
   try {
-    await db.collection('notices').add({
+    const noticeRef = await db.collection('notices').add({
       type, title, body,
       authorId:   currentUser.uid,
       authorName: currentProfile.displayName,
@@ -1511,6 +1563,24 @@ async function postNotice() {
     document.getElementById('noticeBody').value  = '';
     toast('✅ お知らせを投稿しました');
     loadNotices();
+
+    // 全ユーザーに通知を送信
+    const usersSnap = await db.collection('users').get();
+    const batch = db.batch();
+    usersSnap.docs.forEach(userDoc => {
+      const notifRef = db.collection('notifications').doc(userDoc.id)
+        .collection('items').doc();
+      batch.set(notifRef, {
+        type:        'notice',
+        noticeId:    noticeRef.id,
+        noticeTitle: title,
+        noticeBody:  body.length > 60 ? body.slice(0, 60) + '…' : body,
+        fromName:    currentProfile.displayName,
+        read:        false,
+        createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    await batch.commit();
   } catch(e) { toast('投稿に失敗しました: ' + e.message, 4000); }
 }
 
@@ -1901,6 +1971,13 @@ async function openDm(dmId) {
   // DMドキュメント取得してヘッダー表示
   const dmSnap = await db.collection('dms').doc(dmId).get();
   const dmData = dmSnap.data() || {};
+
+  // DMを開いたら自分を既読に追加
+  if (dmData.lastMessageUid && dmData.lastMessageUid !== currentUser.uid) {
+    db.collection('dms').doc(dmId).update({
+      readBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+    }).catch(() => {});
+  }
   let chatName = '';
   let chatSub  = '';
   let settingsBtn = '';
@@ -1979,7 +2056,10 @@ async function sendDmMessage() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     await db.collection('dms').doc(currentDmId).update({
-      lastMessage: text, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      lastMessage:    text,
+      lastMessageUid: currentUser.uid,
+      readBy:         [currentUser.uid],
+      updatedAt:      firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch(e) { toast('送信に失敗しました: ' + e.message, 4000); if (input) input.value = text; }
 }
@@ -2264,6 +2344,145 @@ async function toggleMaintenance() {
     document.getElementById('maintenanceStatus').textContent = 'オフ';
     toast('✅ メンテナンスモードを解除しました');
   }
+}
+
+// ============================================================
+// 通知機能
+// ============================================================
+let notifUnsubscribe = null;
+let dmUnreadUnsubscribe = null;
+
+// バッジ更新ヘルパー
+function updateBadge(ids, count) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (count > 0) {
+      el.textContent = count > 99 ? '99+' : count + '件';
+      el.classList.add('show');
+    } else {
+      el.classList.remove('show');
+    }
+  });
+}
+
+// 通知の未読数をリアルタイム監視
+function startNotifListener() {
+  if (notifUnsubscribe) { notifUnsubscribe(); notifUnsubscribe = null; }
+  notifUnsubscribe = db.collection('notifications').doc(currentUser.uid)
+    .collection('items')
+    .where('read', '==', false)
+    .onSnapshot(snap => {
+      updateBadge(['notifBadge','notifBadgeMobile'], snap.size);
+    }, err => console.warn('通知監視エラー:', err.message));
+}
+
+// DM未読数をリアルタイム監視（最終メッセージが自分以外のもので未読）
+function startDmUnreadListener() {
+  if (dmUnreadUnsubscribe) { dmUnreadUnsubscribe(); dmUnreadUnsubscribe = null; }
+  dmUnreadUnsubscribe = db.collection('dms')
+    .where('participants', 'array-contains', currentUser.uid)
+    .onSnapshot(async snap => {
+      let unreadCount = 0;
+      for (const doc of snap.docs) {
+        const d = doc.data();
+        // lastMessageUid が自分以外 かつ 自分が未読のもの
+        if (d.lastMessageUid && d.lastMessageUid !== currentUser.uid) {
+          const readBy = d.readBy || [];
+          if (!readBy.includes(currentUser.uid)) unreadCount++;
+        }
+      }
+      updateBadge(['dmBadge','dmBadgeMobile'], unreadCount);
+    }, err => console.warn('DM未読監視エラー:', err.message));
+}
+
+// 通知一覧を表示
+async function loadNotifications() {
+  const list = document.getElementById('notificationList');
+  if (!list) return;
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>読み込み中...</div>';
+
+  try {
+    const snap = await db.collection('notifications').doc(currentUser.uid)
+      .collection('items')
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get();
+
+    if (snap.empty) {
+      list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2)">通知はまだありません</div>';
+      return;
+    }
+
+    list.innerHTML = snap.docs.map(doc => {
+      const d = doc.data();
+      const isUnread = !d.read;
+      let icon = '🔔', title = '', body = '';
+
+      if (d.type === 'toutoi') {
+        icon  = '🙏';
+        title = '尊いされました';
+        body  = `${escapeHtml(d.fromName || 'ユーザー')} さんがあなたの投稿に「尊い」を押しました。`;
+      } else if (d.type === 'notice') {
+        icon  = '📢';
+        title = 'お知らせ：' + escapeHtml(d.noticeTitle || '');
+        body  = escapeHtml(d.noticeBody || '');
+      }
+
+      return `<div class="notif-card ${isUnread ? 'unread' : ''}" onclick="markNotifRead('${doc.id}')">
+        <div class="notif-card-header">
+          <span class="notif-icon">${icon}</span>
+          <span class="notif-title">${title}</span>
+          <span class="notif-time">${formatDate(d.createdAt)}</span>
+          ${isUnread ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0"></span>' : ''}
+        </div>
+        <div class="notif-body">${body}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<div style="padding:20px;color:var(--danger)">読み込みエラー: ${e.message}</div>`;
+  }
+}
+
+// 個別通知を既読にする
+async function markNotifRead(notifId) {
+  try {
+    await db.collection('notifications').doc(currentUser.uid)
+      .collection('items').doc(notifId).update({ read: true });
+    // リスト再描画（既読になったのでunreadクラスを外す）
+    const card = document.querySelector(`.notif-card[onclick="markNotifRead('${notifId}')"]`);
+    if (card) {
+      card.classList.remove('unread');
+      const dot = card.querySelector('span[style*="border-radius:50%"]');
+      if (dot) dot.remove();
+    }
+  } catch(e) { console.warn('既読更新エラー:', e.message); }
+}
+
+// 全て既読にする
+async function markAllNotifsRead() {
+  try {
+    const snap = await db.collection('notifications').doc(currentUser.uid)
+      .collection('items').where('read', '==', false).get();
+    const batch = db.batch();
+    snap.docs.forEach(doc => batch.update(doc.ref, { read: true }));
+    await batch.commit();
+    toast('✅ すべて既読にしました');
+    loadNotifications();
+  } catch(e) { toast('エラー: ' + e.message); }
+}
+
+// 通知を送信するヘルパー（Firestore に書き込む）
+async function sendNotification(toUid, data) {
+  if (toUid === currentUser.uid) return; // 自分への通知は送らない
+  try {
+    await db.collection('notifications').doc(toUid)
+      .collection('items').add({
+        ...data,
+        read: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+  } catch(e) { console.warn('通知送信エラー:', e.message); }
 }
 
 // ============================================================
