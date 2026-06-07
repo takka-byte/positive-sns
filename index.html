@@ -2895,10 +2895,18 @@ async function openUserPage(uid) {
     const myData = mySnap.data() || {};
     const isFollowing = (myData.following || []).includes(targetUid);
 
+    // orderByとwhereの複合クエリはインデックスが必要なため
+    // whereのみで取得してクライアント側でソート
     const postsSnap = await db.collection('posts')
       .where('uid','==', targetUid)
-      .orderBy('createdAt','desc')
-      .limit(20).get();
+      .get();
+    const sortedPosts = postsSnap.docs
+      .sort((a, b) => {
+        const ta = a.data().createdAt?.toMillis?.() || 0;
+        const tb = b.data().createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      })
+      .slice(0, 20);
 
     const followers = u.followers || [];
     const following  = u.following  || [];
@@ -2935,13 +2943,13 @@ async function openUserPage(uid) {
         <div class="user-stats">
           <div class="user-stat" onclick="showFollowList('${targetUid}','following')"><strong>${following.length}</strong> フォロー</div>
           <div class="user-stat" onclick="showFollowList('${targetUid}','followers')"><strong>${followers.length}</strong> フォロワー</div>
-          <div class="user-stat"><strong>${postsSnap.size}</strong> 投稿</div>
+          <div class="user-stat"><strong>${sortedPosts.length}</strong> 投稿</div>
         </div>
       </div>
       <div style="border-top:1px solid var(--border);padding:12px 16px;font-weight:700;font-size:15px;background:var(--bg2)">📝 投稿</div>
-      ${postsSnap.empty
+      ${sortedPosts.length === 0
         ? '<div style="padding:30px;text-align:center;color:var(--text2)">まだ投稿がありません</div>'
-        : postsSnap.docs.map(doc => renderPostCard(doc, {[targetUid]: u})).join('')}`;
+        : sortedPosts.map(doc => renderPostCard(doc, {[targetUid]: u})).join('')}`;
   } catch(e) {
     document.getElementById('userpageContent').innerHTML =
       `<div style="padding:20px;color:var(--danger)">エラー: ${e.message}</div>`;
