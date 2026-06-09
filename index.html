@@ -449,8 +449,9 @@ img{max-width:100%}
   <header class="header">
     <div class="header-logo">ポジティブ<span>SNS</span></div>
     <button class="btn-icon" onclick="toggleTheme()" title="ライト/ダーク切替" id="themeBtn">🌙</button>
-    <button class="btn-icon" onclick="showView('settings')" title="設定">⚙️</button>
-    <button class="btn-icon" onclick="doLogout()" title="ログアウト">🚪</button>
+    <button class="btn-icon" onclick="showView('settings')" title="設定" id="headerSettingsBtn" style="display:none">⚙️</button>
+    <button class="btn-icon" onclick="doLogout()" title="ログアウト" id="headerLogoutBtn" style="display:none">🚪</button>
+    <button class="btn btn-primary btn-sm" onclick="goToLogin()" id="headerLoginBtn" style="display:none">ログイン</button>
   </header>
 
   <div class="main-layout">
@@ -465,23 +466,31 @@ img{max-width:100%}
       <button class="nav-item" onclick="showView('notices')" id="nav-notices">
         <span class="icon">📢</span> お知らせ
       </button>
-      <button class="nav-item" onclick="showView('notifications')" id="nav-notifications">
+      <button class="nav-item" id="nav-notifications" onclick="requireLoginThen('notifications')" style="display:none">
         <span class="icon">🔔</span> 通知
         <span class="nav-notif-badge" id="notifBadge"></span>
       </button>
-      <button class="nav-item" onclick="showView('dm')" id="nav-dm">
+      <button class="nav-item" id="nav-dm" onclick="requireLoginThen('dm')" style="display:none">
         <span class="icon">💬</span> メッセージ
         <span class="nav-notif-badge" id="dmBadge"></span>
       </button>
-      <button class="nav-item" onclick="showView('settings')" id="nav-settings">
+      <button class="nav-item" onclick="goToMyProfile()" id="nav-profile" style="display:none">
+        <span class="icon">👤</span> プロフィール
+      </button>
+      <button class="nav-item" onclick="showView('settings')" id="nav-settings" style="display:none">
         <span class="icon">⚙️</span> 設定
       </button>
       <button class="nav-item" onclick="showView('admin')" id="nav-admin" style="display:none">
         <span class="icon">🛡️</span> 管理
       </button>
-      <div class="user-info-sidebar">
+      <div class="user-info-sidebar" id="sidebarUserInfo" style="display:none">
         <div class="name" id="sidebarName"></div>
         <div class="uid" id="sidebarUid"></div>
+      </div>
+      <!-- 未ログイン時のログインボタン -->
+      <div id="sidebarLoginPrompt" style="display:none;padding:12px;border-radius:var(--radius);background:var(--bg3);margin-top:16px;text-align:center">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:10px">ログインしてもっと楽しもう！</p>
+        <button class="btn btn-primary btn-sm btn-full" onclick="goToLogin()">ログイン / 登録</button>
       </div>
     </nav>
 
